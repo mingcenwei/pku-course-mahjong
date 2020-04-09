@@ -1,0 +1,284 @@
+# Clang-Format Style Options:
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+
+---
+# Default
+
+# The style used for all options not specifically set in the configuration.
+BasedOnStyle: Microsoft
+
+# The extra indent or outdent of access modifiers, e.g. public:.
+AccessModifierOffset: -4
+
+# If true, horizontally aligns arguments after an open bracket.
+AlignAfterOpenBracket: AlwaysBreak
+# If true, aligns consecutive assignments.
+AlignConsecutiveAssignments: false
+# If true, aligns consecutive declarations.
+AlignConsecutiveDeclarations: false
+# # If true, aligns consecutive C/C++ preprocessor macros.
+# AlignConsecutiveMacros: false
+# Options for aligning backslashes in escaped newlines.
+AlignEscapedNewlines: DontAlign
+# If true, horizontally align operands of binary and ternary expressions.
+AlignOperands: false
+# If true, aligns trailing comments.
+AlignTrailingComments: false
+
+# If a function call or braced initializer list doesn’t fit on a line, allow putting all arguments onto the next line, even if BinPackArguments is false.
+AllowAllArgumentsOnNextLine: true
+# If a constructor definition with a member initializer list doesn’t fit on a single line, allow putting all member initializers onto the next line, if `ConstructorInitializerAllOnOneLineOrOnePerLine` is true. Note that this parameter has no effect if `ConstructorInitializerAllOnOneLineOrOnePerLine` is false.
+AllowAllConstructorInitializersOnNextLine: true
+# If the function declaration doesn’t fit on a line, allow putting all parameters of a function declaration onto the next line even if BinPackParameters is false.
+AllowAllParametersOfDeclarationOnNextLine: true
+
+# Dependent on the value, while (true) { continue; } can be put on a single line.
+# AllowShortBlocksOnASingleLine: Always
+# If true, short case labels will be contracted to a single line.
+AllowShortCaseLabelsOnASingleLine: false
+# Dependent on the value, int f() { return 0; } can be put on a single line.
+AllowShortFunctionsOnASingleLine: All
+# If true, if (a) return; can be put on a single line.
+# AllowShortIfStatementsOnASingleLine: Always
+AllowShortIfStatementsOnASingleLine: true
+# Dependent on the value, auto lambda []() { return 0; } can be put on a single line.
+AllowShortLambdasOnASingleLine: All
+# If true, while (true) continue; can be put on a single line.
+AllowShortLoopsOnASingleLine: true
+
+# The function declaration return type breaking style to use.
+AlwaysBreakAfterReturnType: None
+
+# If true, always break before multiline string literals.
+AlwaysBreakBeforeMultilineStrings: false
+
+# The template declaration breaking style to use.
+AlwaysBreakTemplateDeclarations: "Yes"
+
+# If false, a function call’s arguments will either be all on the same line or will have one line each.
+BinPackArguments: false
+# If false, a function declaration’s or function definition’s parameters will either all be on the same line or will have one line each.
+BinPackParameters: false
+
+# The brace breaking style to use.
+BreakBeforeBraces: Custom
+# Control of individual brace wrapping cases.
+BraceWrapping:
+    # Wrap case labels.
+    AfterCaseLabel: true
+    # Wrap class definitions.
+    AfterClass: true
+    # Wrap control statements (if/for/while/switch/..).
+    # AfterControlStatement: Always
+    AfterControlStatement: true
+    # Wrap enum definitions.
+    AfterEnum: true
+    # Wrap function definitions.
+    AfterFunction: true
+    # Wrap namespace definitions.
+    AfterNamespace: true
+    # Wrap ObjC definitions (interfaces, implementations…).
+    AfterObjCDeclaration: true
+    # Wrap struct definitions.
+    AfterStruct: true
+    # Wrap union definitions.
+    AfterUnion: true
+    # Wrap extern blocks.
+    AfterExternBlock: true
+    # Wrap before catch.
+    BeforeCatch: true
+    # Wrap before else.
+    BeforeElse: true
+    # Indent the wrapped braces themselves.
+    IndentBraces: false
+    # If false, empty function body can be put on a single line.
+    SplitEmptyFunction: false
+    # If false, empty record (e.g. class, struct or union) body can be put on a single line
+    SplitEmptyRecord: false
+    # If false, empty namespace body can be put on a single line.
+    SplitEmptyNamespace: false
+
+# The way to wrap binary operators.
+BreakBeforeBinaryOperators: None
+# If true, ternary operators will be placed after line breaks.
+BreakBeforeTernaryOperators: false
+
+# The constructor initializers style to use.
+BreakConstructorInitializers: BeforeColon
+# The inheritance list style to use.
+BreakInheritanceList: BeforeColon
+
+# Allow breaking string literals when formatting.
+BreakStringLiterals: false
+
+# The column limit.
+ColumnLimit: 80
+
+# If true, consecutive namespace declarations will be on the same line. If false, each namespace is declared on a new line.
+CompactNamespaces: false
+
+# If the constructor initializers don’t fit on a line, put each initializer on its own line.
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+
+# The number of characters to use for indentation of constructor initializer lists as well as inheritance lists.
+ConstructorInitializerIndentWidth: &IndentWidth 4
+
+# Indent width for line continuations.
+ContinuationIndentWidth: 4
+
+# # Analyze the formatted file for the most used line ending (\r\n or \n).
+# DeriveLineEnding: true
+
+# Disables formatting completely.
+DisableFormat: false
+
+# If true, clang-format adds missing namespace end comments and fixes invalid existing ones.
+FixNamespaceComments: true
+
+# Dependent on the value, multiple #include blocks can be sorted as one and divided based on category.
+IncludeBlocks: Preserve
+
+# # Indent case label blocks one level from the case label.
+# IndentCaseBlocks: false
+
+# Indent case labels one level from the switch statement.
+IndentCaseLabels: false
+# # Indent goto labels.
+# IndentGotoLabels: false
+# The preprocessor directive indenting style to use.
+IndentPPDirectives: BeforeHash
+
+# The number of columns to use for indentation.
+IndentWidth: 4
+
+# Indent if a function definition or declaration is wrapped after the type.
+IndentWrappedFunctionNames: false
+
+# If true, the empty line at the start of blocks is kept.
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+# The maximum number of consecutive empty lines to keep.
+MaxEmptyLinesToKeep: 3
+
+# The indentation used for namespaces.
+NamespaceIndentation: All
+
+# Pointer and reference alignment style.
+PointerAlignment: Left
+
+# If true, clang-format will attempt to re-flow comments.
+ReflowComments: true
+
+# If true, clang-format will sort #includes.
+SortIncludes: true
+# If true, clang-format will sort using declarations.
+SortUsingDeclarations: true
+
+# If true, a space is inserted after C style casts.
+SpaceAfterCStyleCast: true
+# If true, a space is inserted after the logical not operator (!).
+SpaceAfterLogicalNot: false
+# If true, a space will be inserted after the ‘template’ keyword.
+SpaceAfterTemplateKeyword: true
+# If false, spaces will be removed before assignment operators.
+SpaceBeforeAssignmentOperators: true
+# If false, spaces will be removed before constructor initializer colon.
+SpaceBeforeCtorInitializerColon: true
+# If false, spaces will be removed before inheritance colon.
+SpaceBeforeInheritanceColon: true
+# Defines in which cases to put a space before opening parentheses.
+SpaceBeforeParens: ControlStatements
+# If false, spaces will be removed before range-based for loop colon.
+SpaceBeforeRangeBasedForLoopColon: false
+# # If true, spaces will be before [. Lambdas will not be affected. Only the first [ will get a space added.
+# SpaceBeforeSquareBrackets: false
+# # If true, spaces will be inserted into {}.
+# SpaceInEmptyBlock: false
+# If true, spaces may be inserted into ().
+SpaceInEmptyParentheses: false
+# The number of spaces before trailing line comments (// - comments).
+SpacesBeforeTrailingComments: 1
+# If true, spaces will be inserted after < and before > in template argument lists.
+SpacesInAngles: false
+# If true, spaces may be inserted into C style casts.
+SpacesInCStyleCastParentheses: false
+# # If true, spaces will be inserted around if/for/switch/while conditions.
+# SpacesInConditionalStatement: false
+# If true, spaces are inserted inside container literals (e.g. ObjC and Javascript array and dict literals).
+SpacesInContainerLiterals: false
+# If true, spaces will be inserted after ( and before ).
+SpacesInParentheses: false
+# If true, spaces will be inserted after [ and before ]. Lambdas without arguments or unspecified size array declarations will not be affected.
+SpacesInSquareBrackets: false
+
+# The number of columns used for tab stops.
+TabWidth: 4
+
+# # Use \r\n instead of \n for line breaks. Also used as fallback if DeriveLineEnding is true.
+# UseCRLF: false
+
+# The way to use tab characters in the resulting file.
+UseTab: Never
+
+---
+Language: Cpp
+
+# If true, format braced lists as best suited for C++11 braced lists.
+Cpp11BracedListStyle: true
+
+# If true, a space will be inserted before a C++11 braced list used to initialize an object (after the preceding identifier or type).
+SpaceBeforeCpp11BracedList: true
+
+# Parse and format C++ constructs compatible with this standard.
+# Standard: Latest
+Standard: Cpp11
+
+---
+Language: CSharp
+---
+Language: Java
+
+# Break after each annotation on a field in Java files.
+BreakAfterJavaFieldAnnotations: true
+
+---
+Language: JavaScript
+
+# The JavaScriptQuoteStyle to use for JavaScript strings.
+JavaScriptQuotes: Double
+
+# Whether to wrap JavaScript import/export statements.
+JavaScriptWrapImports: true
+
+---
+Language: ObjC
+
+# Controls bin-packing Objective-C protocol conformance list items into as few lines as possible when they go over ColumnLimit.
+ObjCBinPackProtocolList: Auto
+
+# The number of characters to use for indentation of ObjC blocks.
+ObjCBlockIndentWidth: 4
+
+# Add a space after @property in Objective-C, i.e. use @property (readonly) instead of @property(readonly).
+ObjCSpaceAfterProperty: true
+
+# Add a space in front of an Objective-C protocol list, i.e. use Foo <Protocol> instead of Foo<Protocol>.
+ObjCSpaceBeforeProtocolList: true
+
+---
+Language: Proto
+
+# Disables formatting completely.
+DisableFormat: true
+
+---
+Language: TableGen
+
+# Disables formatting completely.
+DisableFormat: true
+
+---
+Language: TextProto
+
+# Disables formatting completely.
+DisableFormat: true
