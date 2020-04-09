@@ -31,11 +31,8 @@
                 "-g",
 
                 "-fPIE",
-                "-pie",
+                "-Wl,-pie",
                 "-fsanitize=address",
-                "-fsanitize=thread",
-                "-fsanitize=memory",
-                "-fsanitize-memory-track-origins",
                 "-fsanitize=undefined",
                 "-fsanitize=float-divide-by-zero",
                 "-fsanitize=unsigned-integer-overflow",
