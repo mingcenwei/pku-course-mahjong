@@ -1,0 +1,59 @@
+{
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "C++ build active file",
+            "command": "/usr/bin/c++",
+            "args":
+            [
+                "${file}",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}",
+
+                "-std=c++17",
+
+                "-Wall",
+                "-Wextra",
+                "-Wconversion",
+                "-Wsign-conversion",
+                "-pedantic-errors",
+
+                "-Weverything",
+                "-Wno-c++98-compat",
+                "-Wno-c++98-compat-pedantic",
+                "-Wno-covered-switch-default",
+                "-Wno-unreachable-code-break",
+                "-Wno-weak-vtables",
+                "-Wno-global-constructors",
+                "-Wno-exit-time-destructors",
+
+                "-DDEBUG_",
+                "-g",
+
+                "-fPIE",
+                "-pie",
+                "-fsanitize=address",
+                "-fsanitize=thread",
+                "-fsanitize=memory",
+                "-fsanitize-memory-track-origins",
+                "-fsanitize=undefined",
+                "-fsanitize=float-divide-by-zero",
+                "-fsanitize=unsigned-integer-overflow",
+                "-fsanitize=implicit-conversion",
+                "-fsanitize=nullability",
+                "-fno-omit-frame-pointer",
+                "-fno-optimize-sibling-calls",
+
+                // "-lm",
+                // "-pthread",
+
+                "-I${workspaceFolder}/include/"
+            ],
+            "options":
+            {
+                "cwd": "/usr/bin"
+            }
+        }
+    ],
+    "version": "2.0.0"
+}
