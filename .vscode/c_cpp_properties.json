@@ -1,0 +1,26 @@
+{
+    "configurations":
+    [
+        {
+            "name": "Mac",
+            "includePath":
+            [
+                "${workspaceFolder}/include/**"
+            ],
+            "browse":
+            {
+                "path":
+                [
+                    "${workspaceFolder}/include/"
+                ]
+            },
+            "defines": [],
+            "macFrameworkPath":
+            [
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/c++"
+        }
+    ],
+    "version": 4
+}
