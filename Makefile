@@ -94,13 +94,8 @@ debug: CXXFLAGS += \
 	-DDEBUG_ \
 	-g \
 	-fPIE \
-	-pie \
 	\
 	-fsanitize=address \
-	-fsanitize=thread \
-	\
-	-fsanitize=memory \
-	-fsanitize-memory-track-origins \
 	\
 	-fsanitize=undefined \
 	-fsanitize=float-divide-by-zero \
@@ -111,6 +106,7 @@ debug: CXXFLAGS += \
 	-fno-omit-frame-pointer \
 	-fno-optimize-sibling-calls \
 
+debug: LDFLAGS += -pie
 debug: build
 
 
@@ -135,13 +131,8 @@ test: CXXFLAGS += \
 	-DDEBUG_ \
 	-g \
 	-fPIE \
-	-pie \
 	\
 	-fsanitize=address \
-	-fsanitize=thread \
-	\
-	-fsanitize=memory \
-	-fsanitize-memory-track-origins \
 	\
 	-fsanitize=undefined \
 	-fsanitize=float-divide-by-zero \
@@ -152,6 +143,7 @@ test: CXXFLAGS += \
 	-fno-omit-frame-pointer \
 	-fno-optimize-sibling-calls \
 
+test: LDFLAGS += -pie
 test: $(TEST_BIN_DIR)/$(TEST_TARGET)
 	@mkdir -p $(TEST_BIN_DIR)
 	@mkdir -p $(TEST_OBJ_DIR)
