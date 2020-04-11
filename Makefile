@@ -17,17 +17,38 @@ CXXFLAGS         := \
 	-Wno-global-constructors \
 	-Wno-exit-time-destructors \
 
+CXXFLAGS_DEBUG   := \
+	-DDEBUG_ \
+	-g \
+	-fPIE \
+	\
+	-fsanitize=address \
+	\
+	-fsanitize=undefined \
+	-fsanitize=float-divide-by-zero \
+	-fsanitize=unsigned-integer-overflow \
+	-fsanitize=implicit-conversion \
+	-fsanitize=nullability \
+	\
+	-fno-omit-frame-pointer \
+	-fno-optimize-sibling-calls \
+
 LDFLAGS          := \
 	# -lm \
 	# -pthread \
 
+LDFLAGS_DEBUG    := \
+	-Wl,-pie \
+
 APP_SRC          := \
 	$(wildcard src/*.cpp) \
+	$(wildcard src/classes/*.cpp) \
 	# $(wildcard src/classes/*.cpp) \
 	# $(wildcard src/**/*.cpp) \
 
 TEST_SRC         := \
 	$(wildcard test/*.cpp) \
+	$(wildcard src/classes/*.cpp) \
 	# $(wildcard src/**/*.cpp) \
 
 APP_TARGET       := mahjong-ai
@@ -74,6 +95,20 @@ build: $(APP_BIN_DIR)/$(APP_TARGET)
 	@mkdir -p $(APP_OBJ_DIR)
 
 
+.PHONY: build_debug
+build_debug: CXXFLAGS += $(CXXFLAGS_DEBUG)
+build_debug: LDFLAGS += $(LDFLAGS_DEBUG)
+build_debug: build
+
+
+.PHONY: build_test
+build_test: CXXFLAGS += $(CXXFLAGS_DEBUG)
+build_test: LDFLAGS += $(LDFLAGS_DEBUG)
+build_test: $(TEST_BIN_DIR)/$(TEST_TARGET)
+	@mkdir -p $(TEST_BIN_DIR)
+	@mkdir -p $(TEST_OBJ_DIR)
+
+
 .PHONY: clean
 clean:
 	-@rm -rv $(BUILD_DIR)
@@ -90,24 +125,10 @@ clean_test:
 
 
 .PHONY: debug
-debug: CXXFLAGS += \
-	-DDEBUG_ \
-	-g \
-	-fPIE \
-	\
-	-fsanitize=address \
-	\
-	-fsanitize=undefined \
-	-fsanitize=float-divide-by-zero \
-	-fsanitize=unsigned-integer-overflow \
-	-fsanitize=implicit-conversion \
-	-fsanitize=nullability \
-	\
-	-fno-omit-frame-pointer \
-	-fno-optimize-sibling-calls \
-
-debug: LDFLAGS += -pie
-debug: build
+debug: build_debug
+debug:
+	@chmod u+x $(APP_BIN_DIR)/$(APP_TARGET)
+	$(APP_BIN_DIR)/$(APP_TARGET)
 
 
 .PHONY: install
@@ -127,33 +148,18 @@ release_without_debug_info: build
 
 
 .PHONY: test
-test: CXXFLAGS += \
-	-DDEBUG_ \
-	-g \
-	-fPIE \
-	\
-	-fsanitize=address \
-	\
-	-fsanitize=undefined \
-	-fsanitize=float-divide-by-zero \
-	-fsanitize=unsigned-integer-overflow \
-	-fsanitize=implicit-conversion \
-	-fsanitize=nullability \
-	\
-	-fno-omit-frame-pointer \
-	-fno-optimize-sibling-calls \
-
-test: LDFLAGS += -pie
-test: $(TEST_BIN_DIR)/$(TEST_TARGET)
-	@mkdir -p $(TEST_BIN_DIR)
-	@mkdir -p $(TEST_OBJ_DIR)
-
+test: build_test
+test:
+	@chmod u+x $(TEST_BIN_DIR)/$(TEST_TARGET)
+	$(TEST_BIN_DIR)/$(TEST_TARGET)
 
 # Help Target
 .PHONY: help
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
 	@echo "... all (the default if no target is provided)"
+	@echo "... build_test"
+	@echo "... build_debug"
 	@echo "... clean"
 	@echo "... clean_app"
 	@echo "... clean_test"
