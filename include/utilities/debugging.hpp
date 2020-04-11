@@ -28,7 +28,10 @@ namespace utilities
     {
         if constexpr (k_isDebugging)
         {
+            auto const flags {std::cerr.flags()};
+            std::cerr << std::boolalpha;
             (std::cerr << ... << std::forward<Printables>(args));
+            std::cerr.flags(flags);
         }
     }
 
