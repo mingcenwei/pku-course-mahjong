@@ -2,6 +2,10 @@
 #define METAPROGRAMMING_HPP_20200314_
 
 #include <type_traits>
+#include <utility>
+
+namespace utilities::private_detail
+{}
 
 namespace utilities
 {
@@ -23,14 +27,25 @@ namespace utilities
     using AssertIntegral_t =
         TemplateAssert_t<bool, std::is_integral_v<Integral>>;
 
-    //Add lvalue reference to T if condition is true.
+    // Add lvalue reference to T if condition is true.
     template <typename T, bool condition>
-    using LvalueRefIf_t = std::
-        conditional_t<condition, std::add_lvalue_reference_t<T>, T>;
+    using LvalueRefIf_t =
+        std::conditional_t<condition, std::add_lvalue_reference_t<T>, T>;
 
     // Add lvalue reference to T if T is not of a scalar type.
     template <typename T>
     using LvalueRefIfNotScalar_t = LvalueRefIf_t<T, !std::is_scalar_v<T>>;
+
+    // True if and only if operator== is defined for T.
+    template <typename T, typename = bool>
+    struct EqualityDefined : std::false_type
+    {};
+    template <typename T>
+    struct EqualityDefined<T, decltype(std::declval<T>() == std::declval<T>())>
+        : std::true_type
+    {};
+    template <typename T>
+    inline constexpr bool equalityDefined_v {EqualityDefined<T>::value};
 } // namespace utilities
 
 #endif
