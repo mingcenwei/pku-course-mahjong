@@ -33,7 +33,7 @@ namespace mahjong
         using StringType = std::string;
         using StringViewType = std::string_view;
         using OutStreamType = std::basic_ostream<StringType::value_type>;
-        using InStreamType = std::basic_istream<StringType::value_type>;
+        using InStreamType = std::basic_istream<StringViewType::value_type>;
 
         static constexpr bool isValidStringRepresentation(
             StringViewType const representation) noexcept;
