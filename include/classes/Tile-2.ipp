@@ -96,37 +96,37 @@ namespace mahjong
     {
         switch (kind)
         {
-        case TileKind::Bing:
+        case TileKind::bing:
             if (index < 1 || index > 9)
             {
                 return false;
             }
             break;
-        case TileKind::Tiao:
+        case TileKind::tiao:
             if (index < 1 || index > 9)
             {
                 return false;
             }
             break;
-        case TileKind::Wan:
+        case TileKind::wan:
             if (index < 1 || index > 9)
             {
                 return false;
             }
             break;
-        case TileKind::Feng:
+        case TileKind::feng:
             if (index < 1 || index > 4)
             {
                 return false;
             }
             break;
-        case TileKind::Jian:
+        case TileKind::jian:
             if (index < 1 || index > 3)
             {
                 return false;
             }
             break;
-        case TileKind::Hua:
+        case TileKind::hua:
             if (index < 1 || index > 8)
             {
                 return false;
@@ -170,37 +170,37 @@ namespace mahjong
         constexpr Tile operator""_b(unsigned long long const index)
         {
             using Index = TileTraits<Tile>::IndexType;
-            constexpr auto kind {TileKind::Bing};
+            constexpr auto kind {TileKind::bing};
             return TileTraits<Tile>::makeTile(kind, static_cast<Index>(index));
         }
         constexpr Tile operator""_t(unsigned long long const index)
         {
             using Index = TileTraits<Tile>::IndexType;
-            constexpr auto kind {TileKind::Tiao};
+            constexpr auto kind {TileKind::tiao};
             return TileTraits<Tile>::makeTile(kind, static_cast<Index>(index));
         }
         constexpr Tile operator""_w(unsigned long long const index)
         {
             using Index = TileTraits<Tile>::IndexType;
-            constexpr auto kind {TileKind::Wan};
+            constexpr auto kind {TileKind::wan};
             return TileTraits<Tile>::makeTile(kind, static_cast<Index>(index));
         }
         constexpr Tile operator""_f(unsigned long long const index)
         {
             using Index = TileTraits<Tile>::IndexType;
-            constexpr auto kind {TileKind::Feng};
+            constexpr auto kind {TileKind::feng};
             return TileTraits<Tile>::makeTile(kind, static_cast<Index>(index));
         }
         constexpr Tile operator""_j(unsigned long long const index)
         {
             using Index = TileTraits<Tile>::IndexType;
-            constexpr auto kind {TileKind::Jian};
+            constexpr auto kind {TileKind::jian};
             return TileTraits<Tile>::makeTile(kind, static_cast<Index>(index));
         }
         constexpr Tile operator""_h(unsigned long long const index)
         {
             using Index = TileTraits<Tile>::IndexType;
-            constexpr auto kind {TileKind::Hua};
+            constexpr auto kind {TileKind::hua};
             return TileTraits<Tile>::makeTile(kind, static_cast<Index>(index));
         }
     } // namespace literals

@@ -15,22 +15,22 @@ namespace
 
         switch (kind)
         {
-        case TileKind::Bing:
+        case TileKind::bing:
             return "饼"sv;
             break;
-        case TileKind::Tiao:
+        case TileKind::tiao:
             return "条"sv;
             break;
-        case TileKind::Wan:
+        case TileKind::wan:
             return "万"sv;
             break;
-        case TileKind::Feng:
+        case TileKind::feng:
             return "风"sv;
             break;
-        case TileKind::Jian:
+        case TileKind::jian:
             return "箭"sv;
             break;
-        case TileKind::Hua:
+        case TileKind::hua:
             return "花"sv;
             break;
         default:
