@@ -38,6 +38,7 @@ namespace mahjong
         return static_cast<TileKind>(index);
     }
     constexpr TileKind indexToTileKind(std::size_t const index);
+    constexpr TileKind unsafeCharToTileKind(char const ch) noexcept;
 
     template <typename Tile_, bool passByValue_ = true>
     struct TileTraits
