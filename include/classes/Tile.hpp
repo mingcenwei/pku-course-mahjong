@@ -106,8 +106,8 @@ namespace mahjong
             TileKind const kind, IndexType const index) noexcept;
 
         constexpr Tile(TileKind const kind, IndexType const index);
-        constexpr TileKind getKind() noexcept;
-        constexpr IndexType getIndex() noexcept
+        constexpr TileKind getKind() const noexcept;
+        constexpr IndexType getIndex() const noexcept
         {
             return static_cast<IndexType>(representation_ % 10);
         }
@@ -151,7 +151,7 @@ namespace mahjong
     private:
         using BaseType_ = std::int_fast8_t;
 
-        BaseType_ const representation_;
+        BaseType_ representation_;
 
         [[noreturn]] static void throwInvalidIndexException(
             TileKind const kind, IndexType const index);

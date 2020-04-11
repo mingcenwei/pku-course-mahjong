@@ -112,7 +112,7 @@ namespace mahjong
         }
     }
 
-    constexpr TileKind Tile::getKind() noexcept
+    constexpr TileKind Tile::getKind() const noexcept
     {
         auto const tileKindIndex {
             static_cast<std::size_t>(representation_ / 10)};
