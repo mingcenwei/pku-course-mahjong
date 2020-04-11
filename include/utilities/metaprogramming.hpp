@@ -4,9 +4,6 @@
 #include <type_traits>
 #include <utility>
 
-namespace utilities::private_detail
-{}
-
 namespace utilities
 {
     // Always false. Can be used in static_assert statements (we cannot use

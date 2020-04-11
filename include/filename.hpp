@@ -3,7 +3,7 @@
 
 #include <cstddef>
 
-namespace name::private_detail
+namespace name::private_detail_
 {
 
 }
