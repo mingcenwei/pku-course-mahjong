@@ -14,6 +14,10 @@ namespace utilities
     // SFINAE.
     template <typename TypeToEnable = bool, bool... Assertions>
     using TemplateAssert_t = std::enable_if<(Assertions && ...), TypeToEnable>;
+
+    template <typename T>
+    using RefIfNotScalar_t = std::
+        conditional_t<std::is_scalar_v<T>, T, std::add_lvalue_reference_t<T>>;
 } // namespace utilities
 
 #endif
