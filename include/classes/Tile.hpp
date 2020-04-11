@@ -28,11 +28,11 @@ namespace mahjong
         TileKind::jian,
         TileKind::hua,
     };
-    inline constexpr std::size_t tileKindToIndex(TileKind const kind) noexcept
+    constexpr std::size_t tileKindToIndex(TileKind const kind) noexcept
     {
         return static_cast<std::size_t>(kind);
     }
-    inline constexpr TileKind unsafeIndexToTileKind(
+    constexpr TileKind unsafeIndexToTileKind(
         std::size_t const index) noexcept
     {
         return static_cast<TileKind>(index);
@@ -113,7 +113,7 @@ namespace mahjong
         }
 
 #if __cplusplus >= 202002L
-        friend constexpr bool operator==(
+        friend constexpr auto operator<=>(
             Tile const tile1, Tile const tile2) noexcept = default;
 #else
         friend constexpr bool operator==(
@@ -125,6 +125,26 @@ namespace mahjong
             Tile const tile1, Tile const tile2) noexcept
         {
             return tile1.representation_ != tile2.representation_;
+        }
+        friend constexpr bool operator<(
+            Tile const tile1, Tile const tile2) noexcept
+        {
+            return tile1.representation_ < tile2.representation_;
+        }
+        friend constexpr bool operator<=(
+            Tile const tile1, Tile const tile2) noexcept
+        {
+            return tile1.representation_ <= tile2.representation_;
+        }
+        friend constexpr bool operator>(
+            Tile const tile1, Tile const tile2) noexcept
+        {
+            return tile1.representation_ > tile2.representation_;
+        }
+        friend constexpr bool operator>=(
+            Tile const tile1, Tile const tile2) noexcept
+        {
+            return tile1.representation_ >= tile2.representation_;
         }
 #endif
 
