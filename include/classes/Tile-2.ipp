@@ -50,6 +50,34 @@ namespace mahjong
         }
     }
 
+    constexpr char tileKindToChar(TileKind const kind) noexcept
+    {
+        switch (kind)
+        {
+        case TileKind::bing:
+            return 'b';
+            break;
+        case TileKind::tiao:
+            return 't';
+            break;
+        case TileKind::wan:
+            return 'w';
+            break;
+        case TileKind::feng:
+            return 'f';
+            break;
+        case TileKind::jian:
+            return 'j';
+            break;
+        case TileKind::hua:
+            return 'h';
+            break;
+        default:
+            utilities::unreachableCodeBlock();
+            break;
+        }
+    }
+
     constexpr TileKind unsafeCharToTileKind(char const ch) noexcept
     {
         switch (ch)
