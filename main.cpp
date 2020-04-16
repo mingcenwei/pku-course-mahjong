@@ -6,7 +6,7 @@
 #include "MahjongGB/tile.h"
 
 #define LOCAL_DEBUG
-//是否为本地debug模式，如果是，开启assert以检测可能的错误
+//是否为本地debug模式，如果是，开启LOCAL_ASSERT以检测可能的错误
 #ifdef LOCAL_DEBUG
 #define LOCAL_ASSERT(expr) assert(expr)
 #else
@@ -48,7 +48,7 @@ std::vector<mahjong::tile_t> tiles_river;
 std::vector<mahjong::tile_t> all_player_discard_record[4];
 
 mahjong::tile_t str2tile_t(const std::string &s) {
-    mahjong::suit_t suit;
+    mahjong::suit_t suit = TILE_SUIT_NONE;
     auto rank = static_cast<mahjong::rank_t>(s[1] - '0');
     switch (s[0]) {
         case 'W':
@@ -72,7 +72,7 @@ mahjong::tile_t str2tile_t(const std::string &s) {
             suit = 5;
             break;
         default:
-            throw 1;
+            suit = TILE_SUIT_NONE;
     }
     return mahjong::make_tile(suit, rank);
 }
@@ -110,7 +110,7 @@ std::string tile_t2str(const mahjong::tile_t &tile, bool use_chinese = true) {
                             type = "北";
                             break;
                         default:
-                            throw 1;
+                            LOCAL_ASSERT(0);
                     }
                     rank = ' ';
                 } else type = "F";
@@ -129,7 +129,7 @@ std::string tile_t2str(const mahjong::tile_t &tile, bool use_chinese = true) {
                             type = "白";
                             break;
                         default:
-                            throw 1;
+                            LOCAL_ASSERT(0);
                     }
                     rank = ' ';
                 } else {
@@ -143,7 +143,9 @@ std::string tile_t2str(const mahjong::tile_t &tile, bool use_chinese = true) {
             else type = "H";
             break;
         default:
-            throw 1;
+            if (use_chinese)type = "暗";
+            else type = "X";
+            rank = ' ';
     }
     type.push_back(rank);
     return type;
@@ -168,7 +170,7 @@ std::string pack_t2str(const mahjong::pack_t &pack) {
             res += card;
             break;
         default:
-            throw 1;
+            LOCAL_ASSERT(0);
     }
     res += "}";
     return res;
@@ -398,7 +400,7 @@ void init() {
                         if (player_id == lastPlayerID) {
                             LOCAL_ASSERT(last_request_type == 3);
                             LOCAL_ASSERT(last_op == "DRAW");
-                            auto tile_kung = str2tile_t("D1");//统一生成一饼，实际是不知道花色的暗杠
+                            auto tile_kung = str2tile_t("X1");//不知道暗杠
                             all_player_fixed_packs[player_id].push_back(
                                     mahjong::make_pack(0, PACK_TYPE_KONG, tile_kung));
                         } else {
@@ -423,7 +425,7 @@ void init() {
                             }
                         }
                         auto q = find(my_standing_tiles_vector.begin(), my_standing_tiles_vector.end(), tile_kong);
-                        assert(q != my_standing_tiles_vector.end());
+                        LOCAL_ASSERT(q != my_standing_tiles_vector.end());
                         my_standing_tiles_vector.erase(q);
                         LOCAL_ASSERT(!flag);
                     } else {
@@ -442,7 +444,7 @@ void init() {
                 break;
             }
             default:
-                throw 1;
+                LOCAL_ASSERT(0);
         }
     }
 
@@ -484,7 +486,7 @@ void init() {
                 my_hand_tiles_table[tile] += 4;
                 break;
             default:
-                throw 1;
+                LOCAL_ASSERT(0);
         }
     }
     //其他人副露打表
@@ -506,7 +508,7 @@ void init() {
                     if (offer)global_tiles_table[tile] += 4;
                     break;//暗杠不打表
                 default:
-                    throw 1;
+                    LOCAL_ASSERT(0);
             }
         }
     }
@@ -541,9 +543,7 @@ void show_current_board() {
     for (int i = 0; i < 4; i++) {
         std::cout << i << ' ';
         for (const auto &pack:all_player_fixed_packs[i]) {
-            if (mahjong::pack_get_type(pack) == PACK_TYPE_KONG && !mahjong::pack_get_offer(pack))
-                std::cout << "{X X X X }";//不知道别人的暗杠，花色用X代替
-            else std::cout << pack_t2str(pack);//明杠使用字符串化函数
+            std::cout << pack_t2str(pack);
         }
         std::cout << std::endl;
     }
