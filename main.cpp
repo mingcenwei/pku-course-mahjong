@@ -2,40 +2,52 @@
 #include <sstream>
 #include <algorithm>
 #include <vector>
-#include "MahjongGB/shanten.cpp"
+#include <cassert>
 #include "MahjongGB/tile.h"
 
-//#define LOCAL_DEBUG
+#define LOCAL_DEBUG
+//是否为本地debug模式，如果是，开启assert以检测可能的错误
+#ifdef LOCAL_DEBUG
+#define LOCAL_ASSERT(expr) assert(expr)
+#else
+#define LOCAL_ASSERT(expr) (expr)
+#endif
 
-int turnID;
-//当前局数，从1开始算，有turnID个request，turnID-1个response
-int myPlayerID;
-//自己的编号，0~3逆时针编码
-int quan;
-//当前风向，0号的自风为东
+/* 保存当前对局信息的全局变量
+
+int cur_turn_id                                        当前局数，从1开始算
+int my_player_id                                       自己的编号，0~3逆时针编码，同时对应东南西北的自风
+int wind                                               当前场风
+
+std::vector<std::string> request, response             所有的request和response，有turnID个request，cur_turn_id-1个response
+
+mahjong::tile_t  global_tiles_table[0x60]              全局用掉的牌，包含自己手牌、补花的花牌、牌河和所有人的副露，用来检测听牌张数的
+mahjong::tile_t my_hand_tiles_table[0x60]              手牌牌表，不使用算番库的tile_table_t类型，不涉及递归削减的话就不用紧凑编码了，更方便使用
+
+mahjong::hand_tiles_t my_hand_tiles                    手牌，包含副露
+std::vector<mahjong::tile_t> my_standing_tiles_vector  手牌立牌部分的vector形式
+std::vector<mahjong::pack_t> my_fixed_packs_vector     手牌副露部分的vector形式
+
+std::vector<mahjong::pack_t> all_player_fixed_packs[4] 记录其他人的副露，不包含自己的副露；除了杠子标注明杠和暗杠，不使用pack_t的offer信息
+std::vector<mahjong::tile_t> all_player_flowers[4]     记录所有人的花牌
+std::vector<mahjong::tile_t> tiles_river               牌河,不包含花牌
+std::vector<mahjong::tile_t> all_player_discard_record[4]   记录所有人曾经的弃章，包括打出、吃打出、碰打出
+
+ */
+
+int cur_turn_id, my_player_id, wind;
 std::vector<std::string> request, response;
-//所有的request和response
 mahjong::tile_t global_tiles_table[0x60];
-//全局用掉的牌，包含自己手牌、补花的花牌、牌河和所有人的副露
-mahjong::hand_tiles_t my_hand_tiles;
-//手牌，包含副露
 mahjong::tile_t my_hand_tiles_table[0x60];
-//手牌牌表，不使用算番库的tile_table_t类型，不涉及递归削减的话就不用紧凑编码了，更方便使用
-std::vector<mahjong::tile_t> my_hand_tiles_vector;
-//在还原过程中，不使用hand_tiles_t，因为立牌数会超过13张
+mahjong::hand_tiles_t my_hand_tiles;
+std::vector<mahjong::tile_t> my_standing_tiles_vector;
 std::vector<mahjong::pack_t> my_fixed_packs_vector;
-//同样的原因,不用hand_tiles_t
 std::vector<mahjong::pack_t> all_player_fixed_packs[4];
-//记录其他人的副露，注意吃和碰的时候不关心offer（供牌信息）
-//只有杠牌的时候用offer表示明暗杠，0表示暗杠，1表示明杠，暗杠时不知道具体花色
-//且不包含自己的副露信息（会记录在hand_tiles里面）
 std::vector<mahjong::tile_t> all_player_flowers[4];
-//所有人的花牌记录，包括自己的花牌
 std::vector<mahjong::tile_t> tiles_river;
-//牌河,不包含花牌
+std::vector<mahjong::tile_t> all_player_discard_record[4];
 
 mahjong::tile_t str2tile_t(const std::string &s) {
-    //请参考tiles.h
     mahjong::suit_t suit;
     auto rank = static_cast<mahjong::rank_t>(s[1] - '0');
     switch (s[0]) {
@@ -65,31 +77,70 @@ mahjong::tile_t str2tile_t(const std::string &s) {
     return mahjong::make_tile(suit, rank);
 }
 
-std::string tile_t2str(const mahjong::tile_t &tile) {
+std::string tile_t2str(const mahjong::tile_t &tile, bool use_chinese = true) {
     std::string type;
     char rank = mahjong::tile_get_rank(tile) + '0';
     switch (mahjong::tile_get_suit(tile)) {
         case TILE_SUIT_CHARACTERS:
-            type = "W";
+            if (use_chinese)type = "万";
+            else type = "W";
             break;
         case TILE_SUIT_DOTS:
-            type = "B";
+            if (use_chinese)type = "饼";
+            else type = "B";
             break;
         case TILE_SUIT_BAMBOO:
-            type = "T";
+            if (use_chinese)type = "条";
+            else type = "T";
             break;
         case TILE_SUIT_HONORS:
             if (rank >= '1' && rank <= '4') {
-                //风牌
-                type = "F";
+                if (use_chinese) {
+                    switch (rank) {
+                        case '1':
+                            type = "东";
+                            break;
+                        case '2':
+                            type = "南";
+                            break;
+                        case '3':
+                            type = "西";
+                            break;
+                        case '4':
+                            type = "北";
+                            break;
+                        default:
+                            throw 1;
+                    }
+                    rank = ' ';
+                } else type = "F";
             } else {
                 //箭牌
-                type = "J";
-                rank -= 4;
+                LOCAL_ASSERT(rank >= '5' && rank <= '7');
+                if (use_chinese) {
+                    switch (rank) {
+                        case '5':
+                            type = "中";
+                            break;
+                        case '6':
+                            type = "发";
+                            break;
+                        case '7':
+                            type = "白";
+                            break;
+                        default:
+                            throw 1;
+                    }
+                    rank = ' ';
+                } else {
+                    type = "J";
+                    rank -= 4;
+                }
             }
             break;
         case 5:
-            type = "H";
+            if (use_chinese)type = "花";
+            else type = "H";
             break;
         default:
             throw 1;
@@ -100,7 +151,7 @@ std::string tile_t2str(const mahjong::tile_t &tile) {
 
 std::string pack_t2str(const mahjong::pack_t &pack) {
     std::string card = tile_t2str(mahjong::pack_get_tile(pack));
-    std::string res = "[";
+    std::string res = "{";
     switch (mahjong::pack_get_type(pack)) {
         case PACK_TYPE_PUNG:
             res += card + card + card;
@@ -109,30 +160,28 @@ std::string pack_t2str(const mahjong::pack_t &pack) {
             res += card + card + card + card;
             break;
         case PACK_TYPE_CHOW:
-            --card[1];
+            --card.back();
             res += card;
-            ++card[1];
+            ++card.back();
             res += card;
-            ++card[1];
+            ++card.back();
             res += card;
             break;
         default:
             throw 1;
     }
-    res += "]";
+    res += "}";
     return res;
 }
 
 void init() {
-    //初始化全局变量
-
-
+    //该函数用于初始化全局变量
     {
         //获取输入
         std::string s;
-        std::cin >> turnID;
+        std::cin >> cur_turn_id;
         std::getchar();//取走'\n'
-        for (int i = 1; i < turnID; i++) {
+        for (int i = 1; i < cur_turn_id; i++) {
             std::getline(std::cin, s);
             request.push_back(s);
             std::getline(std::cin, s);
@@ -152,26 +201,26 @@ void init() {
     特别要注意的是，如果一个response会传给所有玩家的话，玩家会收到自己response导致的request，比如自己提出打出一张牌，
     则下回合会收到自己打出了一张牌的request，这时候必须直接PASS
 
-    0."0 playerID quan"               只在第一回合出现，玩家序号、风圈
+    0."0 player_id wind"               只在第一回合出现，玩家序号、风圈
 
     1."1 hua0 hua1 hua2 hua3 handCard(1~13) flower0_(1~hua0) flower1_(1~hua1)..."
                                    依次是四个玩家摸到的花牌数，自己的十三张手牌（已经补过花，不存在花牌），所有玩家摸到的花牌
 
     2."2 card0                    表示自己摸到card0
 
-    3."3 playerID BUHUA card0"        表示打出花牌card0并且摸一张牌
+    3."3 player_id BUHUA card0"        表示打出花牌card0并且摸一张牌
 
-    4."3 playerID DRAW"               表示摸了一张牌
+    4."3 player_id DRAW"               表示摸了一张牌
 
-    5."3 playerID PLAY card0"         表示打出card0
+    5."3 player_id PLAY card0"         表示打出card0
 
-    6."3 playerID PENG card0"         表示碰card0
+    6."3 player_id PENG card0"         表示碰card0
 
-    7."3 playerID CHI card0 card1"    表示吃了上家的牌后，生成的顺子中间牌为card0，并且打出card1
+    7."3 player_id CHI card0 card1"    表示吃了上家的牌后，生成的顺子中间牌为card0，并且打出card1
 
-    8."3 playerID GANG"               表示杠牌，如果该玩家刚摸完牌则是暗杠，如果其他玩家刚打出牌则是明杠
+    8."3 player_id GANG"               表示杠牌，如果该玩家刚摸完牌则是暗杠，如果其他玩家刚打出牌则是明杠
 
-    9."3 playerID BUGANG card0"       表示补杠
+    9."3 player_id BUGANG card0"       表示补杠
 
     对应十种request，分别有如下可选的response
     0.  "PASS"                          获取信息后跳过
@@ -203,15 +252,15 @@ void init() {
     */
 
     std::istringstream iss;
-    for (int turn = 0; turn < turnID - 1; ++turn) {
-        std::cout << request[turn] << std::endl;
+    for (int turn = 0; turn != cur_turn_id; ++turn) {
+        iss.clear();
         iss.str(request[turn]);
-        int request_type, playerID;
+        int request_type, player_id;
         std::string op, card0, card1;
         iss >> request_type;
         switch (request_type) {
             case 0: {
-                iss >> myPlayerID >> quan;
+                iss >> my_player_id >> wind;
                 break;
             }
             case 1: {
@@ -219,7 +268,7 @@ void init() {
                 for (int &x:flower_cnt)iss >> x;
                 for (int ii = 0; ii < 13; ++ii) {
                     iss >> card0;
-                    my_hand_tiles_vector.push_back(str2tile_t(card0));
+                    my_standing_tiles_vector.push_back(str2tile_t(card0));
                 }
                 for (int ii = 0; ii < 4; ii++) {
                     for (int jj = 0; jj < flower_cnt[ii]; ++jj) {
@@ -231,47 +280,50 @@ void init() {
             }
             case 2: {
                 iss >> card0;
-                my_hand_tiles_vector.push_back(str2tile_t(card0));//此时立牌可能是14张（无副露情况）
+                my_standing_tiles_vector.push_back(str2tile_t(card0));//此时立牌是14张（无副露情况）
                 break;
             }
             case 3: {
-                iss >> playerID >> op;
+                iss >> player_id >> op;
                 if (op == "BUHUA") {
                     iss >> card0;
-                    all_player_flowers[playerID].push_back(str2tile_t(card0));
+                    all_player_flowers[player_id].push_back(str2tile_t(card0));
                 } else if (op == "DRAW") {
                     //其他玩家的摸牌，没有任何信息
                 } else if (op == "PLAY") {
                     iss >> card0;
                     auto tile_discard = str2tile_t(card0);
-                    if (playerID == myPlayerID) {
-                        auto p = find(my_hand_tiles_vector.begin(), my_hand_tiles_vector.end(), tile_discard);
-                        assert(p != my_hand_tiles_vector.end());
-                        my_hand_tiles_vector.erase(p);
+                    if (player_id == my_player_id) {
+                        auto p = find(my_standing_tiles_vector.begin(), my_standing_tiles_vector.end(), tile_discard);
+                        LOCAL_ASSERT(p != my_standing_tiles_vector.end());
+                        my_standing_tiles_vector.erase(p);
                     }
                     tiles_river.push_back(tile_discard);
+                    all_player_discard_record[player_id].push_back(tile_discard);
                 } else if (op == "PENG") {
                     iss >> card0;
                     auto tile_pung = tiles_river.back();
                     tiles_river.pop_back();
                     auto tile_discard = str2tile_t(card0);
-                    if (playerID == myPlayerID) {
-                        auto p = std::find(my_hand_tiles_vector.begin(), my_hand_tiles_vector.end(), tile_pung);
-                        assert(p != my_hand_tiles_vector.end());
-                        my_hand_tiles_vector.erase(p);//删掉第一张
+                    if (player_id == my_player_id) {
+                        auto p = std::find(my_standing_tiles_vector.begin(), my_standing_tiles_vector.end(), tile_pung);
+                        LOCAL_ASSERT(p != my_standing_tiles_vector.end());
+                        my_standing_tiles_vector.erase(p);//删掉第一张
 
-                        p = std::find(my_hand_tiles_vector.begin(), my_hand_tiles_vector.end(), tile_pung);
-                        assert(p != my_hand_tiles_vector.end());
-                        my_hand_tiles_vector.erase(p);//删掉第二张
+                        p = std::find(my_standing_tiles_vector.begin(), my_standing_tiles_vector.end(), tile_pung);
+                        LOCAL_ASSERT(p != my_standing_tiles_vector.end());
+                        my_standing_tiles_vector.erase(p);//删掉第二张
 
-                        p = std::find(my_hand_tiles_vector.begin(), my_hand_tiles_vector.end(), tile_discard);
-                        assert(p != my_hand_tiles_vector.end());
-                        my_hand_tiles_vector.erase(p);//删掉打出的牌
+                        p = std::find(my_standing_tiles_vector.begin(), my_standing_tiles_vector.end(), tile_discard);
+                        LOCAL_ASSERT(p != my_standing_tiles_vector.end());
+                        my_standing_tiles_vector.erase(p);//删掉打出的牌
 
                         my_fixed_packs_vector.push_back(mahjong::make_pack(0, PACK_TYPE_PUNG, tile_pung));//生成碰
-                    } else all_player_fixed_packs[playerID].push_back(mahjong::make_pack(0, PACK_TYPE_PUNG, tile_pung));
-                    //这里不关心谁供的牌，只关心生成了一幅面子，减少了有效牌数
+                    } else
+                        all_player_fixed_packs[player_id].push_back(mahjong::make_pack(0, PACK_TYPE_PUNG, tile_pung));
+                    //不关心谁供的牌，只关心生成了一幅面子，供牌信息应该对局面估值应该是没用的
                     tiles_river.push_back(tile_discard);
+                    all_player_discard_record[player_id].push_back(tile_discard);
                 } else if (op == "CHI") {
                     iss >> card0 >> card1;
                     //card0是生成顺子的中间牌，card1是打出的
@@ -279,80 +331,88 @@ void init() {
                     auto tile_discard = str2tile_t(card1);
                     auto tile_chow = tiles_river.back();//吃的牌必定来自牌河最后一张
                     tiles_river.pop_back();
-                    if (playerID == myPlayerID) {
+                    if (player_id == my_player_id) {
                         std::vector<mahjong::tile_t> chow_in_hand;
                         chow_in_hand.push_back(tile_mid - (unsigned char) 1);
                         chow_in_hand.push_back(tile_mid);
                         chow_in_hand.push_back(tile_mid + (unsigned char) 1);
                         //生成吃的三张牌
                         auto p = find(chow_in_hand.begin(), chow_in_hand.end(), tile_chow);
-                        assert(p != chow_in_hand.end());
+                        LOCAL_ASSERT(p != chow_in_hand.end());
                         chow_in_hand.erase(p);
-                        //去掉牌河中最后一张，也就是剩下两张来自手牌
+                        //去掉从牌河中拿到的牌，剩下两张牌都来自手牌，需要在手牌中删除
                         for (const auto &tile:chow_in_hand) {
-                            auto q = find(my_hand_tiles_vector.begin(), my_hand_tiles_vector.end(), tile);
-                            assert(q != my_hand_tiles_vector.end());
-                            my_hand_tiles_vector.erase(q);
+                            auto q = find(my_standing_tiles_vector.begin(), my_standing_tiles_vector.end(), tile);
+                            LOCAL_ASSERT(q != my_standing_tiles_vector.end());
+                            my_standing_tiles_vector.erase(q);
                         }//在手牌中相关牌删除
+                        p = find(my_standing_tiles_vector.begin(), my_standing_tiles_vector.end(), tile_discard);
+                        LOCAL_ASSERT(p != my_standing_tiles_vector.end());
+                        my_standing_tiles_vector.erase(p);
+                        //删掉弃章
                         my_fixed_packs_vector.push_back(mahjong::make_pack(0, PACK_TYPE_CHOW, tile_mid));
-                    } else all_player_fixed_packs[playerID].push_back(mahjong::make_pack(0, PACK_TYPE_CHOW, tile_mid));
+                    } else all_player_fixed_packs[player_id].push_back(mahjong::make_pack(0, PACK_TYPE_CHOW, tile_mid));
                     tiles_river.push_back(tile_discard);
+                    all_player_discard_record[player_id].push_back(tile_discard);
                 } else if (op == "GANG") {
-                    if (playerID == myPlayerID) {
-                        //如果是自己，一定知道花色
+                    if (player_id == my_player_id) {
+                        iss.clear();
                         iss.str(request[turn - 1]);
                         int last_request_type;
                         iss >> last_request_type;
                         if (last_request_type == 2) {
-                            //说明是自己摸牌，即使暗杠
+                            //说明是自己摸牌，即暗杠
                             iss >> card0;
                             auto tile_kong = str2tile_t(card0);
-                            for (int tt = 0; tt < 3; ++tt) {
-                                auto p = find(my_hand_tiles_vector.begin(), my_hand_tiles_vector.end(), tile_kong);
-                                assert(p != my_hand_tiles_vector.end());
-                                my_hand_tiles_vector.erase(p);
-                            }//删除三张手牌
+                            for (int tt = 0; tt < 4; ++tt) {
+                                auto p = find(my_standing_tiles_vector.begin(), my_standing_tiles_vector.end(),
+                                              tile_kong);
+                                LOCAL_ASSERT(p != my_standing_tiles_vector.end());
+                                my_standing_tiles_vector.erase(p);
+                            }//删除四张手牌
                             my_fixed_packs_vector.push_back(mahjong::make_pack(0, PACK_TYPE_KONG, tile_kong));
-                            //生成暗杠，即offer为0
+                            //生成暗杠，offer为0
                         } else {
                             //说明是杠牌河上一张牌
                             auto tile_kong = tiles_river.back();
                             tiles_river.pop_back();
                             for (int tt = 0; tt < 3; ++tt) {
-                                auto p = find(my_hand_tiles_vector.begin(), my_hand_tiles_vector.end(), tile_kong);
-                                assert(p != my_hand_tiles_vector.end());
-                                my_hand_tiles_vector.erase(p);
+                                auto p = find(my_standing_tiles_vector.begin(),
+                                              my_standing_tiles_vector.end(), tile_kong);
+                                LOCAL_ASSERT(p != my_standing_tiles_vector.end());
+                                my_standing_tiles_vector.erase(p);
                             }//删除三张手牌
                             my_fixed_packs_vector.push_back(mahjong::make_pack(1, PACK_TYPE_KONG, tile_kong));
                             //生成明杠，统一offer为1
                         }
                     } else {
+                        iss.clear();
                         iss.str(request[turn - 1]);
                         //看上一request是否是他摸牌，如果是则暗杠，否则明杠
                         //上一个request只有两种可能，一种是杠牌人摸牌，另一种是非杠牌人打牌
-                        //如果是暗杠，则pack_tile是无效的，明杠则有效
+                        //如果是暗杠，则不能使用pack_get_tile，明杠则可以用于计数有效张
                         int last_request_type;
                         int lastPlayerID;
                         std::string last_op;
                         iss >> last_request_type >> lastPlayerID >> last_op;
-                        if (playerID == lastPlayerID) {
-                            assert(last_request_type == 3);
-                            assert(last_op == "DRAW");
+                        if (player_id == lastPlayerID) {
+                            LOCAL_ASSERT(last_request_type == 3);
+                            LOCAL_ASSERT(last_op == "DRAW");
                             auto tile_kung = str2tile_t("D1");//统一生成一饼，实际是不知道花色的暗杠
-                            all_player_fixed_packs[playerID].push_back(
+                            all_player_fixed_packs[player_id].push_back(
                                     mahjong::make_pack(0, PACK_TYPE_KONG, tile_kung));
                         } else {
                             auto tile_kung = tiles_river.back();
                             //从牌河弹出上一张牌
                             tiles_river.pop_back();
-                            all_player_fixed_packs[playerID].push_back(
+                            all_player_fixed_packs[player_id].push_back(
                                     mahjong::make_pack(1, PACK_TYPE_KONG, tile_kung));
                         }
                     }
                 } else if (op == "BUGANG") {
                     iss >> card0;
                     auto tile_kong = str2tile_t(card0);
-                    if (playerID == myPlayerID) {
+                    if (player_id == my_player_id) {
                         bool flag = true;
                         for (auto &p:my_fixed_packs_vector) {
                             if (mahjong::pack_get_type(p) == PACK_TYPE_PUNG &&
@@ -362,10 +422,13 @@ void init() {
                                 break;
                             }
                         }
-                        assert(!flag);
+                        auto q = find(my_standing_tiles_vector.begin(), my_standing_tiles_vector.end(), tile_kong);
+                        assert(q != my_standing_tiles_vector.end());
+                        my_standing_tiles_vector.erase(q);
+                        LOCAL_ASSERT(!flag);
                     } else {
                         bool flag = true;
-                        for (auto &p:all_player_fixed_packs[playerID]) {
+                        for (auto &p:all_player_fixed_packs[player_id]) {
                             if (mahjong::pack_get_type(p) == PACK_TYPE_PUNG &&
                                 mahjong::pack_get_tile(p) == tile_kong) {
                                 flag = false;
@@ -373,7 +436,7 @@ void init() {
                                 break;
                             }
                         }
-                        assert(!flag);
+                        LOCAL_ASSERT(!flag);
                     }
                 }
                 break;
@@ -385,19 +448,22 @@ void init() {
 
     //生成手牌
     my_hand_tiles.tile_count = 0;
-    for (const auto &tile:my_hand_tiles_vector)my_hand_tiles.standing_tiles[my_hand_tiles.tile_count++] = tile;
+    sort(my_standing_tiles_vector.begin(), my_standing_tiles_vector.end());
+    for (const auto &tile:my_standing_tiles_vector)my_hand_tiles.standing_tiles[my_hand_tiles.tile_count++] = tile;
     my_hand_tiles.pack_count = 0;
     for (const auto &pack:my_fixed_packs_vector)my_hand_tiles.fixed_packs[my_hand_tiles.pack_count++] = pack;
 
     //开始打表
-    for (auto const &tile:tiles_river)++global_tiles_table[tile];
+    for (auto &cnt:global_tiles_table)cnt = 0;
+    for (auto &cnt:my_hand_tiles_table)cnt = 0;
     //牌河打表
-    for (auto const &v:all_player_flowers)for (auto const &tile_flower:v)++global_tiles_table[tile_flower];
+    for (auto const &tile:tiles_river)++global_tiles_table[tile];
     //花牌打表
-    for (auto const &tile:my_hand_tiles_vector)++global_tiles_table[tile], ++my_hand_tiles_table[tile];
+    for (auto const &v:all_player_flowers)for (auto const &tile_flower:v)++global_tiles_table[tile_flower];
     //手牌立牌打表
+    for (auto const &tile:my_standing_tiles_vector)++global_tiles_table[tile], ++my_hand_tiles_table[tile];
+    //自己副露打表
     for (auto const &p:my_fixed_packs_vector) {
-        //自己副露打表
         auto type = mahjong::pack_get_type(p);
         auto tile = mahjong::pack_get_tile(p);
         switch (type) {
@@ -421,8 +487,8 @@ void init() {
                 throw 1;
         }
     }
+    //其他人副露打表
     for (auto const &v:all_player_fixed_packs) {
-        //其他人副露打表
         for (auto const &p:v) {
             auto offer = mahjong::pack_get_offer(p);
             auto type = mahjong::pack_get_type(p);
@@ -437,7 +503,7 @@ void init() {
                     global_tiles_table[tile] += 3;
                     break;
                 case PACK_TYPE_KONG:
-                    if (offer == 1)global_tiles_table[tile] += 4;
+                    if (offer)global_tiles_table[tile] += 4;
                     break;//暗杠不打表
                 default:
                     throw 1;
@@ -446,34 +512,38 @@ void init() {
     }
 }
 
-int main() {
-#ifdef LOCAL_DEBUG
-    std::freopen("in.txt", "r", stdin);
-    std::freopen("out.txt", "w", stdout);
-#endif
-
-
-    init();
+void show_current_board() {
     std::cout << "River is:" << std::endl;
     for (const auto &tile:tiles_river) {
-        std::cout << tile_t2str(tile) << ' ';
+        std::cout << '[' << tile_t2str(tile) << ']';
+    }
+    std::cout << std::endl << std::endl;
+    std::cout << "All players' discard recordings are:" << std::endl;
+    for (int i = 0; i < 4; i++) {
+        std::cout << i << ' ';
+        for (const auto &tile:all_player_discard_record[i]) {
+            std::cout << '[' << tile_t2str(tile) << ']';
+        }
+        std::cout << std::endl;
     }
     std::cout << std::endl << std::endl;
     std::cout << "My hand tiles are:" << std::endl;
-    for (const auto &tile:my_hand_tiles_vector) {
-        std::cout << tile_t2str(tile) << ' ';
+    for (const auto &tile:my_standing_tiles_vector) {
+        std::cout << '[' << tile_t2str(tile) << ']';
     }
     std::cout << std::endl << std::endl;
     std::cout << "My fixed packs are:" << std::endl;
     for (const auto &pack:my_fixed_packs_vector) {
-        std::cout << pack_t2str(pack) << ' ';
+        std::cout << pack_t2str(pack);
     }
     std::cout << std::endl << std::endl;
-    std::cout << "Other players' packs are:" << std::endl;
+    std::cout << "Other players' fixed packs are:" << std::endl;
     for (int i = 0; i < 4; i++) {
         std::cout << i << ' ';
         for (const auto &pack:all_player_fixed_packs[i]) {
-            std::cout << pack_t2str(pack) << ' ';
+            if (mahjong::pack_get_type(pack) == PACK_TYPE_KONG && !mahjong::pack_get_offer(pack))
+                std::cout << "{X X X X }";//不知道别人的暗杠，花色用X代替
+            else std::cout << pack_t2str(pack);//明杠使用字符串化函数
         }
         std::cout << std::endl;
     }
@@ -482,9 +552,18 @@ int main() {
     for (int i = 0; i < 4; i++) {
         std::cout << i << ' ';
         for (const auto &tile:all_player_flowers[i]) {
-            std::cout << tile_t2str(tile) << ' ';
+            std::cout << '[' << tile_t2str(tile) << ']';
         }
         std::cout << std::endl;
     }
+}
+
+int main() {
+#ifdef LOCAL_DEBUG
+    std::freopen("in.txt", "r", stdin);
+    //std::freopen("out.txt", "w", stdout);
+#endif
+    init();
+    show_current_board();
     return 0;
 }
