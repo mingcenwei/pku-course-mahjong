@@ -627,6 +627,7 @@ void discard_response() {
 }
 
 void promote_kong_response(mahjong::tile_t tile_kong) {
+    //tile_kong是别人补杠的牌，其实这个case只用判断能不能胡，不胡是傻逼
     std::string res;
     //...
     response.emplace_back(res);
