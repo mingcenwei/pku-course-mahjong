@@ -48,7 +48,7 @@ std::vector<mahjong::tile_t> tiles_river;
 std::vector<mahjong::tile_t> all_player_discard_record[4];
 
 mahjong::tile_t str2tile_t(const std::string &s) {
-    mahjong::suit_t suit = TILE_SUIT_NONE;
+    mahjong::suit_t suit;
     auto rank = static_cast<mahjong::rank_t>(s[1] - '0');
     switch (s[0]) {
         case 'W':
@@ -216,7 +216,7 @@ void init() {
 
     5."3 player_id PLAY card0"         表示打出card0
 
-    6."3 player_id PENG card0"         表示碰card0
+    6."3 player_id PENG card0"         表示碰上一张牌后打出card0
 
     7."3 player_id CHI card0 card1"    表示吃了上家的牌后，生成的顺子中间牌为card0，并且打出card1
 
@@ -558,12 +558,76 @@ void show_current_board() {
     }
 }
 
+void play_response();
+
+void discard_response();
+
+void promote_kong_response(mahjong::tile_t);
+
 int main() {
 #ifdef LOCAL_DEBUG
     std::freopen("in.txt", "r", stdin);
     //std::freopen("out.txt", "w", stdout);
 #endif
     init();
-    show_current_board();
+    //如果调试时想要显示对局信息，去掉show_current_board()的注释
+    //show_current_board();
+    std::istringstream iss;
+    iss.str(request.back());
+    int request_type;
+    iss >> request_type;
+    switch (request_type) {
+        case 0:
+        case 1:
+            response.emplace_back("PASS");
+            break;
+        case 2:
+            play_response();
+            break;
+        case 3: {
+            int player_id;
+            std::string op;
+            iss >> player_id >> op;
+            if (op == "BUHUA" || op == "DRAW" || op == "GANG") response.emplace_back("PASS");
+            else if (op == "PLAY" || op == "PENG" || op == "CHI")discard_response();
+            else if (op == "BUGANG") {
+                std::string card_kong;
+                iss >> card_kong;
+                auto tile_kong = str2tile_t(card_kong);
+                promote_kong_response(tile_kong);
+            } else
+                LOCAL_ASSERT(0);
+            break;
+        }
+        default:
+            LOCAL_ASSERT(0);
+    }
+    std::cout << response.back();
     return 0;
+}
+
+
+//需要完成的是三个决策函数，play_response，discard_response，kong_response
+//三个函数分别是:
+//  摸了一张牌后决定打出哪张（此时摸的牌已经在手牌里了）；
+//  别人打出一张牌后决定如何反应（吃，碰，杠，胡，PASS），这张牌在tiles_river的最后一张
+//  别人加杠的时候如何反应（PASS，抢杠胡），这张牌通过参数传递
+//决策的结果按照输出格式push_back到response里面，比如"PASS","CHI card0 card1"等等
+void play_response() {
+    std::string res;
+    //...
+    response.emplace_back(res);
+}
+
+void discard_response() {
+    auto tile_discard = tiles_river.back();//这张就是别人打出的牌
+    std::string res;
+    //...
+    response.emplace_back(res);
+}
+
+void promote_kong_response(mahjong::tile_t tile_kong) {
+    std::string res;
+    //...
+    response.emplace_back(res);
 }
