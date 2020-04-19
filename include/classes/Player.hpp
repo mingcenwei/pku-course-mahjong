@@ -15,6 +15,9 @@ namespace mahjong
 {
     class Player
     {
+    private:
+        using Hand_ = Hand;
+
     public:
         using Fan = std::size_t;
         using FanTable =
@@ -23,12 +26,21 @@ namespace mahjong
         Player() = delete;
         Player(Wind const menfeng) noexcept : menfeng_ {menfeng} {}
 
-        Player(Wind const menfeng, Hand const& hand)
+        Player(Wind const menfeng, Hand_ const& hand)
             : menfeng_ {menfeng}, hand_ {hand}
         {}
-        Player(Wind const menfeng, Hand&& hand)
+        Player(Wind const menfeng, Hand_&& hand)
             : menfeng_ {menfeng}, hand_ {std::move(hand)}
         {}
+
+        void setHand(Hand_ const& hand)
+        {
+            hand_ = hand;
+        }
+        void setHand(Hand_&& hand)
+        {
+            hand_ = std::move(hand);
+        }
 
         Fan calculateFan(
             Tile winningTile,
@@ -57,7 +69,6 @@ namespace mahjong
         template <typename Flag>
         using FlagContainer_ = std::vector<Flag>;
 
-        using Hand_ = Hand;
         using Hua_ = Hand_;
         using Chi_ = Hand_;
         using Peng_ = Hand_;

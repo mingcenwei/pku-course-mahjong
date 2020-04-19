@@ -3,6 +3,7 @@
 
 #include "classes/Tile.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <initializer_list>
 #include <iostream>
@@ -29,6 +30,22 @@ namespace mahjong
         Hand() = default;
         Hand(std::initializer_list<TileType> const tiles) : tiles_ {tiles} {}
         explicit Hand(StringViewType const representation);
+
+        void sort()
+        {
+            std::sort(std::begin(tiles_), std::end(tiles_));
+        }
+        template <typename Compare>
+        void sort(Compare compare)
+        {
+            std::sort(std::begin(tiles_), std::end(tiles_), compare);
+        }
+
+        template <typename... ArgTypes>
+        decltype(auto) emplace(ArgTypes&&... args)
+        {
+            return tiles_.emplace_back(std::forward<ArgTypes>(args)...);
+        }
 
         [[nodiscard]] StringType toString() const;
 
