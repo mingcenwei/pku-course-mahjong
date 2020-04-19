@@ -2,109 +2,17 @@
 #define TILE_HPP_20200409_
 
 #include "classes/Tile-1.ipp"
-#include "utilities/metaprogramming.hpp"
+#include "classes/TileTraits.hpp"
+#include "utilities/debugging.hpp"
 
-#include <array>
-#include <cstddef>
 #include <cstdint>
-#include <type_traits>
 
 namespace mahjong
 {
-    enum class TileKind
-    {
-        bing,
-        tiao,
-        wan,
-        feng,
-        jian,
-        hua,
-    };
-    inline constexpr std::array k_tileKindList {
-        TileKind::bing,
-        TileKind::tiao,
-        TileKind::wan,
-        TileKind::feng,
-        TileKind::jian,
-        TileKind::hua,
-    };
-    constexpr std::size_t tileKindToIndex(TileKind const kind) noexcept
-    {
-        return static_cast<std::size_t>(kind);
-    }
-    constexpr TileKind unsafeIndexToTileKind(
-        std::size_t const index) noexcept
-    {
-        return static_cast<TileKind>(index);
-    }
-    constexpr TileKind indexToTileKind(std::size_t const index);
-    constexpr char tileKindToChar(TileKind const kind) noexcept;
-    constexpr TileKind unsafeCharToTileKind(char const ch) noexcept;
-
-    template <typename Tile_, bool passByValue_ = true>
-    struct TileTraits
-    {
-    public:
-        using TileType = Tile_;
-        using IndexType = private_detail_::
-            IndexTypeMemberTypeOrGiveType_t<TileType, std::int_fast8_t>;
-
-    private:
-        using TileOrTileRef = utilities::LvalueRefIf_t<TileType, !passByValue_>;
-        using ConstTileOrConstTileRef =
-            utilities::LvalueRefIf_t<TileType const, !passByValue_>;
-
-    public:
-        constexpr TileTraits() noexcept = delete;
-
-        static constexpr bool passByValue() noexcept { return passByValue_; }
-
-        static constexpr TileKind getKind(ConstTileOrConstTileRef tile) noexcept
-        {
-            return tile.getKind();
-        }
-        static constexpr IndexType getIndex(
-            ConstTileOrConstTileRef tile) noexcept
-        {
-            return tile.getIndex();
-        }
-        [[nodiscard]] static constexpr TileType makeTile(
-            TileKind const kind, IndexType const index);
-
-        static constexpr bool isOfKind(
-            ConstTileOrConstTileRef tile, TileKind const kind) noexcept
-        {
-            return getKind(tile) == kind;
-        }
-        static constexpr bool hasIndex(
-            ConstTileOrConstTileRef tile, IndexType const index) noexcept
-        {
-            return getIndex(tile) == index;
-        }
-        static constexpr bool sameKind(
-            ConstTileOrConstTileRef tile1,
-            ConstTileOrConstTileRef tile2) noexcept
-        {
-            return getKind(tile1) == getKind(tile2);
-        }
-        static constexpr bool sameIndex(
-            ConstTileOrConstTileRef tile1,
-            ConstTileOrConstTileRef tile2) noexcept
-        {
-            return getIndex(tile1) == getIndex(tile2);
-        }
-        static constexpr bool isSame(
-            ConstTileOrConstTileRef tile1,
-            ConstTileOrConstTileRef tile2) noexcept;
-    };
-
     class Tile
     {
     public:
         using IndexType = std::int_fast8_t;
-
-        static constexpr bool areValidArguments(
-            TileKind const kind, IndexType const index) noexcept;
 
         constexpr Tile(TileKind const kind, IndexType const index);
         constexpr TileKind getKind() const noexcept;
@@ -150,9 +58,17 @@ namespace mahjong
 #endif
 
     private:
+        using Traits_ = TileTraits<Tile>;
         using BaseType_ = std::int_fast8_t;
 
         BaseType_ representation_;
+
+        static constexpr auto validRepresentations_ {
+            private_detail_::
+                generateAllValidRepresentations<Tile, BaseType_>()};
+
+        constexpr Tile(BaseType_ const representation) noexcept(
+            !utilities::k_isDebugging);
 
         [[noreturn]] static void throwInvalidIndexException(
             TileKind const kind, IndexType const index);

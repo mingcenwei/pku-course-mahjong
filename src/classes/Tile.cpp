@@ -46,9 +46,13 @@ namespace mahjong
         TileKind const kind, IndexType const index)
     {
         using namespace std::string_literals;
-        auto msg {"invalid tile index: tile kind "s};
-        constexpr std::size_t additionalMemoryToReserve {15};
-        msg.reserve(msg.size() + additionalMemoryToReserve);
+        constexpr std::string_view promptPrefix {
+            "invalid tile index: tile kind "};
+        constexpr auto promptPrefixLength {std::size(promptPrefix)};
+        constexpr auto memoryToReserve {promptPrefixLength + 15};
+        std::string msg {};
+        msg.reserve(memoryToReserve);
+        msg += promptPrefix;
         msg += tileKindToStringView(kind);
         msg += ", index ";
         msg += std::to_string(index);

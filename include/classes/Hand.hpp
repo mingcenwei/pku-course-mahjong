@@ -12,18 +12,6 @@
 #include <utility>
 #include <vector>
 
-namespace mahjong::private_detail_
-{}
-
-namespace mahjong
-{
-    class Hand;
-    inline namespace literals
-    {
-        Hand operator""_H(char const* representation, std::size_t const length);
-    } // namespace literals
-} // namespace mahjong
-
 namespace mahjong
 {
     class Hand
@@ -49,9 +37,6 @@ namespace mahjong
 
         Container_ tiles_ {};
 
-        friend Hand literals::operator""_H(
-            char const* representation, std::size_t const length);
-
         [[noreturn]] static void throwInvalidStringRepresentationException(
             StringViewType const representation);
     };
@@ -59,6 +44,14 @@ namespace mahjong
     Hand::OutStreamType& operator<<(
         Hand::OutStreamType& outStream, Hand const& hand);
     Hand::InStreamType& operator>>(Hand::InStreamType& inStream, Hand& hand);
+} // namespace mahjong
+
+namespace mahjong
+{
+    inline namespace literals
+    {
+        Hand operator""_H(char const* representation, std::size_t const length);
+    } // namespace literals
 } // namespace mahjong
 
 #include "classes/Hand.ipp"

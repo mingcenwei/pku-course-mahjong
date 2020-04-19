@@ -192,6 +192,8 @@
         "Bing",
         "Feng",
         "Jian",
-        "Tiao"
-    ]
+        "Tiao",
+        "btwfjh"
+    ],
+    "cmake.configureOnOpen": false
 }

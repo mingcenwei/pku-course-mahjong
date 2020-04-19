@@ -56,10 +56,11 @@ namespace mahjong
         auto currentTileKind {Traits::getKind(tiles_.front())};
         for (auto iter {++std::begin(tiles_)}; iter != std::end(tiles_); ++iter)
         {
-            if (currentTileKind != Traits::getKind(*iter))
+            auto const nextTileKind {Traits::getKind(*iter)};
+            if (currentTileKind != nextTileKind)
             {
                 representation += tileKindToChar(currentTileKind);
-                currentTileKind = Traits::getKind(*iter);
+                currentTileKind = nextTileKind;
             }
             representation += std::to_string(Traits::getIndex(*iter));
         }

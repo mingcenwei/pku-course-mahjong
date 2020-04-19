@@ -15,8 +15,7 @@ namespace mahjong
         }
 
         auto ch {representation.back()};
-        if (!(ch == 'b' || ch == 't' || ch == 'w' || ch == 'f' || ch == 'j' ||
-              ch == 'h'))
+        if (!isValidTileKindSymbol(ch))
         {
             return false;
         }
@@ -28,9 +27,9 @@ namespace mahjong
             ch = *position;
             if (ch >= '0' && ch <= '9')
             {
-                auto const index {
-                    static_cast<Hand::TileType::IndexType>(ch - '0')};
-                if (!Hand::TileType::areValidArguments(currentTileKind, index))
+                using Traits = TileTraits<Hand::TileType>;
+                auto const index {static_cast<Traits::IndexType>(ch - '0')};
+                if (!Traits::areValidArguments(currentTileKind, index))
                 {
                     return false;
                 }
@@ -39,9 +38,7 @@ namespace mahjong
                     continue;
                 }
             }
-            else if (
-                ch == 'b' || ch == 't' || ch == 'w' || ch == 'f' || ch == 'j' ||
-                ch == 'h')
+            else if (isValidTileKindSymbol(ch))
             {
                 currentTileKind = unsafeCharToTileKind(ch);
                 continue;
