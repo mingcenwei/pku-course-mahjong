@@ -55,8 +55,8 @@ APP_TARGET       := mahjong-ai
 TEST_TARGET      := test
 INCLUDE          := \
 	-Iinclude/ \
-	-Ilibrary/ChineseOfficialMahjongHelper/Classes/mahjong-algorithm \
-	
+	-isystem library/ChineseOfficialMahjongHelper/Classes/mahjong-algorithm \
+
 INSTALL_DIR      := ./bin
 
 

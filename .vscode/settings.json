@@ -75,7 +75,7 @@
         // "-pthread",
 
         "-I${workspaceRoot}/include/",
-        "-I${workspaceRoot}/library/ChineseOfficialMahjongHelper/Classes/mahjong-algorithm/"
+        "-isystem ${workspaceRoot}/library/ChineseOfficialMahjongHelper/Classes/mahjong-algorithm/"
     ],
     "files.associations":
     {

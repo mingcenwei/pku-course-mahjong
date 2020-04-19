@@ -45,7 +45,7 @@
                 // "-pthread",
 
                 "-I${workspaceFolder}/include/",
-                "-I${workspaceFolder}/library/ChineseOfficialMahjongHelper/Classes/mahjong-algorithm/"
+                "-isystem ${workspaceFolder}/library/ChineseOfficialMahjongHelper/Classes/mahjong-algorithm/"
             ],
             "options":
             {
