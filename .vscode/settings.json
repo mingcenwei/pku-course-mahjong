@@ -17,6 +17,7 @@
         "-Wno-weak-vtables",
         "-Wno-global-constructors",
         "-Wno-exit-time-destructors",
+        "-Wno-padded",
 
         "-DDEBUG_",
         "-g",
@@ -56,6 +57,7 @@
         "-Wno-weak-vtables",
         "-Wno-global-constructors",
         "-Wno-exit-time-destructors",
+        "-Wno-padded",
 
         "-DDEBUG_",
         "-g",
@@ -196,6 +198,7 @@
     "cSpell.words": [
         "Bing",
         "Feng",
+        "Fulu",
         "Jiagang",
         "Jian",
         "Juezhang",

@@ -16,6 +16,7 @@ CXXFLAGS         := \
 	-Wno-weak-vtables \
 	-Wno-global-constructors \
 	-Wno-exit-time-destructors \
+	-Wno-padded \
 
 CXXFLAGS_DEBUG   := \
 	-DDEBUG_ \
