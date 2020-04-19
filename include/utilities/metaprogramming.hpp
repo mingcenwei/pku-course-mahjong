@@ -11,8 +11,8 @@ namespace utilities
     template <typename AnyType>
     inline constexpr bool falseForStaticAssert_v {false};
 
-    // Enable "TypeToEnable" if and only all "assertions" are true. Useful for
-    // SFINAE.
+    // Enable "TypeToEnable" if and only if all "assertions" are true. Useful
+    // for SFINAE.
     template <typename TypeToEnable = bool, bool... assertions>
     using TemplateAssert_t = std::enable_if<(assertions && ...), TypeToEnable>;
     // Convenient form of "TemplateAssert_t" which lets "TypeToEnable" be bool.
