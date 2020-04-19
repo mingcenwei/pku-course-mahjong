@@ -79,22 +79,31 @@ namespace utilities
         using std::logic_error::logic_error;
     };
 
+    namespace private_detail_
+    {
+        [[noreturn]] inline void unreachableCodeBlock(
+            bool const printErrorMsg, std::string_view const msg)
+        {
+            if (printErrorMsg)
+            {
+                std::cerr << msg << "\n";
+            }
+            throw UnreachableCodeError {msg.begin()};
+        }
+    } // namespace private_detail_
+
     // Put this function to locations in other functions where processes should
     // never reach. If "enabledOnlyWhenDebugging" is true, this function has
     // effect only in debugging.
     template <bool enabledOnlyWhenDebugging = true>
-    [[noreturn]] inline constexpr void unreachableCodeBlock(
+    constexpr void unreachableCodeBlock(
         bool const printErrorMsg = false,
         std::string_view const msg =
             "this code block should have been unreachable") noexcept(!k_isDebugging && enabledOnlyWhenDebugging)
     {
         if constexpr (k_isDebugging || !enabledOnlyWhenDebugging)
         {
-            if (printErrorMsg)
-            {
-                std::cerr << msg << "\n";
-            }
-            throw UnreachableCodeError {msg.cbegin()};
+            private_detail_::unreachableCodeBlock(printErrorMsg, msg);
         }
     }
 
