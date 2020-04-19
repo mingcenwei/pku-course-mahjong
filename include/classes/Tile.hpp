@@ -5,7 +5,9 @@
 #include "classes/TileTraits.hpp"
 #include "utilities/debugging.hpp"
 
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 
 namespace mahjong
 {
@@ -58,6 +60,8 @@ namespace mahjong
 #endif
 
     private:
+        friend class std::hash<Tile>;
+
         using Traits_ = TileTraits<Tile>;
         using BaseType_ = std::int_fast8_t;
 
@@ -76,6 +80,19 @@ namespace mahjong
             TileKind const kind, IndexType const index);
     };
 } // namespace mahjong
+
+namespace std
+{
+    template <>
+    struct hash<mahjong::Tile>
+    {
+        constexpr std::size_t operator()(mahjong::Tile const tile) const
+            noexcept
+        {
+            return static_cast<std::size_t>(tile.representation_);
+        }
+    };
+} // namespace std
 
 namespace mahjong
 {
