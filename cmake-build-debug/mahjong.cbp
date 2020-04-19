@@ -80,7 +80,7 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="C:/projects/ClionProject/pku-course-mahjong/main.cpp">
+		<Unit filename="C:/projects/ClionProject/pku-course-mahjong/ver0.cpp">
 			<Option target="mahjong"/>
 		</Unit>
 		<Unit filename="C:/projects/ClionProject/pku-course-mahjong/CMakeLists.txt">

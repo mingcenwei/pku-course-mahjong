@@ -122,32 +122,32 @@ mahjong/fast:
 	$(MAKE) -f CMakeFiles\mahjong.dir\build.make CMakeFiles/mahjong.dir/build
 .PHONY : mahjong/fast
 
-main.obj: main.cpp.obj
+ver0.obj: ver0.cpp.obj
 
-.PHONY : main.obj
+.PHONY : ver0.obj
 
 # target to build an object file
-main.cpp.obj:
-	$(MAKE) -f CMakeFiles\mahjong.dir\build.make CMakeFiles/mahjong.dir/main.cpp.obj
-.PHONY : main.cpp.obj
+ver0.cpp.obj:
+	$(MAKE) -f CMakeFiles\mahjong.dir\build.make CMakeFiles/mahjong.dir/ver0.cpp.obj
+.PHONY : ver0.cpp.obj
 
-main.i: main.cpp.i
+ver0.i: ver0.cpp.i
 
-.PHONY : main.i
+.PHONY : ver0.i
 
 # target to preprocess a source file
-main.cpp.i:
-	$(MAKE) -f CMakeFiles\mahjong.dir\build.make CMakeFiles/mahjong.dir/main.cpp.i
-.PHONY : main.cpp.i
+ver0.cpp.i:
+	$(MAKE) -f CMakeFiles\mahjong.dir\build.make CMakeFiles/mahjong.dir/ver0.cpp.i
+.PHONY : ver0.cpp.i
 
-main.s: main.cpp.s
+ver0.s: ver0.cpp.s
 
-.PHONY : main.s
+.PHONY : ver0.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) -f CMakeFiles\mahjong.dir\build.make CMakeFiles/mahjong.dir/main.cpp.s
-.PHONY : main.cpp.s
+ver0.cpp.s:
+	$(MAKE) -f CMakeFiles\mahjong.dir\build.make CMakeFiles/mahjong.dir/ver0.cpp.s
+.PHONY : ver0.cpp.s
 
 # Help Target
 help:
@@ -158,9 +158,9 @@ help:
 	@echo ... mahjong
 	@echo ... edit_cache
 	@echo ... rebuild_cache
-	@echo ... main.obj
-	@echo ... main.i
-	@echo ... main.s
+	@echo ... ver0.obj
+	@echo ... ver0.i
+	@echo ... ver0.s
 .PHONY : help
 
 

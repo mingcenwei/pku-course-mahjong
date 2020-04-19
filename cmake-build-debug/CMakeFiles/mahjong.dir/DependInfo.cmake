@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "C:/projects/ClionProject/pku-course-mahjong/main.cpp" "C:/projects/ClionProject/pku-course-mahjong/cmake-build-debug/CMakeFiles/mahjong.dir/main.cpp.obj"
+  "C:/projects/ClionProject/pku-course-mahjong/ver0.cpp" "C:/projects/ClionProject/pku-course-mahjong/cmake-build-debug/CMakeFiles/mahjong.dir/ver0.cpp.obj"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

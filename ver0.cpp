@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <vector>
 #include <cassert>
-#include "MahjongGB/tile.h"
-#include "MahjongGB/fan_calculator.h"
+#include "MahjongGB/shanten.cpp"
+#include "MahjongGB/fan_calculator.cpp"
+
+#define INF 0xFFFFFFFF;
 
 //#define LOCAL_DEBUG
 //是否为本地debug模式，如果是，开启LOCAL_ASSERT以检测可能的错误
@@ -22,8 +24,8 @@ int wind                                               当前场风
 
 std::vector<std::string> request, response             所有的request和response，有turnID个request，cur_turn_id-1个response
 
-int tile_t  global_tiles_table[0x60]              全局用掉的牌，包含自己手牌、补花的花牌、牌河和所有人的副露，用来检测听牌张数的
-int tile_t my_hand_tiles_table[0x60]              手牌牌表，不使用算番库的tile_table_t类型，不涉及递归削减的话就不用紧凑编码了，更方便使用
+mahjong::tile_t  global_tiles_table[0x60]              全局用掉的牌，包含自己手牌、补花的花牌、牌河和所有人的副露，用来检测听牌张数的
+mahjong::tile_t my_hand_tiles_table[0x60]              手牌牌表，不使用算番库的tile_table_t类型，不涉及递归削减的话就不用紧凑编码了，更方便使用
 
 mahjong::hand_tiles_t my_hand_tiles                    手牌，包含副露
 std::vector<mahjong::tile_t> my_standing_tiles_vector  手牌立牌部分的vector形式
@@ -38,8 +40,8 @@ std::vector<mahjong::tile_t> all_player_discard_record[4]   记录所有人曾经的弃章
 
 int cur_turn_id, my_player_id, wind;
 std::vector<std::string> request, response;
-int global_tiles_table[0x60];
-int my_hand_tiles_table[0x60];
+uint8_t global_tiles_table[0x60];
+uint8_t my_hand_tiles_table[0x60];
 mahjong::hand_tiles_t my_hand_tiles;
 std::vector<mahjong::tile_t> my_standing_tiles_vector;
 std::vector<mahjong::pack_t> my_fixed_packs_vector;
@@ -78,7 +80,7 @@ mahjong::tile_t str2tile_t(const std::string &s) {
     return mahjong::make_tile(suit, rank);
 }
 
-std::string tile_t2str(const mahjong::tile_t &tile, bool use_chinese = true) {
+std::string tile_t2str(const mahjong::tile_t &tile, bool use_chinese = false) {
     std::string type;
     char rank = mahjong::tile_get_rank(tile) + '0';
     switch (mahjong::tile_get_suit(tile)) {
@@ -193,66 +195,66 @@ void init() {
         std::getline(std::cin, s);
         request.push_back(s);
     }
-/*
-    request有四大种类
-    0. 获取门风圈风信息
-    1. 代表获取手牌信息
-    2. 自己摸了一张牌，必须要进行应对，不能跳过
-    3. 别人打出了牌，别人杠了牌，别人摸了牌等等。可以选择应对（比如碰牌，胡牌），也可以跳过。
+    /*
+        request有四大种类
+        0. 获取门风圈风信息
+        1. 代表获取手牌信息
+        2. 自己摸了一张牌，必须要进行应对，不能跳过
+        3. 别人打出了牌，别人杠了牌，别人摸了牌等等。可以选择应对（比如碰牌，胡牌），也可以跳过。
 
-    四大种类对应格式有十种，其中0,1,2一一对应，3对应3~9
-    特别要注意的是，如果一个response会传给所有玩家的话，玩家会收到自己response导致的request，比如自己提出打出一张牌，
-    则下回合会收到自己打出了一张牌的request，这时候必须直接PASS
+        四大种类对应格式有十种，其中0,1,2一一对应，3对应3~9
+        特别要注意的是，如果一个response会传给所有玩家的话，玩家会收到自己response导致的request，比如自己提出打出一张牌，
+        则下回合会收到自己打出了一张牌的request，这时候必须直接PASS
 
-    0."0 player_id wind"               只在第一回合出现，玩家序号、风圈
+        0."0 player_id wind"               只在第一回合出现，玩家序号、风圈
 
-    1."1 hua0 hua1 hua2 hua3 handCard(1~13) flower0_(1~hua0) flower1_(1~hua1)..."
-                                   依次是四个玩家摸到的花牌数，自己的十三张手牌（已经补过花，不存在花牌），所有玩家摸到的花牌
+        1."1 hua0 hua1 hua2 hua3 handCard(1~13) flower0_(1~hua0) flower1_(1~hua1)..."
+                                       依次是四个玩家摸到的花牌数，自己的十三张手牌（已经补过花，不存在花牌），所有玩家摸到的花牌
 
-    2."2 card0                    表示自己摸到card0
+        2."2 card0                    表示自己摸到card0
 
-    3."3 player_id BUHUA card0"        表示打出花牌card0并且摸一张牌
+        3."3 player_id BUHUA card0"        表示打出花牌card0并且摸一张牌
 
-    4."3 player_id DRAW"               表示摸了一张牌
+        4."3 player_id DRAW"               表示摸了一张牌
 
-    5."3 player_id PLAY card0"         表示打出card0
+        5."3 player_id PLAY card0"         表示打出card0
 
-    6."3 player_id PENG card0"         表示碰上一张牌后打出card0
+        6."3 player_id PENG card0"         表示碰上一张牌后打出card0
 
-    7."3 player_id CHI card0 card1"    表示吃了上家的牌后，生成的顺子中间牌为card0，并且打出card1
+        7."3 player_id CHI card0 card1"    表示吃了上家的牌后，生成的顺子中间牌为card0，并且打出card1
 
-    8."3 player_id GANG"               表示杠牌，如果该玩家刚摸完牌则是暗杠，如果其他玩家刚打出牌则是明杠
+        8."3 player_id GANG"               表示杠牌，如果该玩家刚摸完牌则是暗杠，如果其他玩家刚打出牌则是明杠
 
-    9."3 player_id BUGANG card0"       表示补杠
+        9."3 player_id BUGANG card0"       表示补杠
 
-    对应十种request，分别有如下可选的response
-    0.  "PASS"                          获取信息后跳过
+        对应十种request，分别有如下可选的response
+        0.  "PASS"                          获取信息后跳过
 
-    1.  "PASS"                          获取信息后跳过
+        1.  "PASS"                          获取信息后跳过
 
-    2:
-            "PLAY card0"                摸牌后打出card0
-            "GANG card0"                摸牌后进行暗杠，如果成功会再次摸牌（摸牌动作本回合不用处理）
-            "BUGANG card0"              摸牌后进行补杠，如果成功会再次摸牌（摸牌动作本回合不用处理）
-            "HU"                        自摸
+        2:
+                "PLAY card0"                摸牌后打出card0
+                "GANG card0"                摸牌后进行暗杠，如果成功会再次摸牌（摸牌动作本回合不用处理）
+                "BUGANG card0"              摸牌后进行补杠，如果成功会再次摸牌（摸牌动作本回合不用处理）
+                "HU"                        自摸
 
-    3.  "PASS"                          表示获取了其他玩家已经补花的信息
+        3.  "PASS"                          表示获取了其他玩家已经补花的信息
 
-    4.  "PASS"                          表示获取了其他玩家已经摸牌的信息
+        4.  "PASS"                          表示获取了其他玩家已经摸牌的信息
 
-    5,6,7:
-            "PASS"                      表示获取了其他人打出了某张牌的信息（通过摸、碰吃的形式），但不做反应
-            "PENG card0"                表示碰别人打出的牌
-            "CHI card0 card1"           表示吃别人打出的牌后组成顺子的中间牌是card0，打card1
-            "GANG"                      表示杠别人打出的牌
-            "HU"                        表示荣胡
+        5,6,7:
+                "PASS"                      表示获取了其他人打出了某张牌的信息（通过摸、碰吃的形式），但不做反应
+                "PENG card0"                表示碰别人打出的牌
+                "CHI card0 card1"           表示吃别人打出的牌后组成顺子的中间牌是card0，打card1
+                "GANG"                      表示杠别人打出的牌
+                "HU"                        表示荣胡
 
-    8.      "PASS"                      表示知道了别人杠牌的信息
+        8.      "PASS"                      表示知道了别人杠牌的信息
 
-    9:
-            "PASS"                      表示知道了别人补杠的信息
-            "HU"                        表示抢杠胡
-    */
+        9:
+                "PASS"                      表示知道了别人补杠的信息
+                "HU"                        表示抢杠胡
+        */
 
     std::istringstream iss;
     for (int turn = 0; turn != cur_turn_id; ++turn) {
@@ -268,7 +270,7 @@ void init() {
             }
             case 1: {
                 int flower_cnt[4];
-                for (int &x:flower_cnt)iss >> x;
+                for (int &x : flower_cnt)iss >> x;
                 for (int ii = 0; ii < 13; ++ii) {
                     iss >> card0;
                     my_standing_tiles_vector.push_back(str2tile_t(card0));
@@ -344,7 +346,7 @@ void init() {
                         LOCAL_ASSERT(p != chow_in_hand.end());
                         chow_in_hand.erase(p);
                         //去掉从牌河中拿到的牌，剩下两张牌都来自手牌，需要在手牌中删除
-                        for (const auto &tile:chow_in_hand) {
+                        for (const auto &tile : chow_in_hand) {
                             auto q = find(my_standing_tiles_vector.begin(), my_standing_tiles_vector.end(), tile);
                             LOCAL_ASSERT(q != my_standing_tiles_vector.end());
                             my_standing_tiles_vector.erase(q);
@@ -417,7 +419,7 @@ void init() {
                     auto tile_kong = str2tile_t(card0);
                     if (player_id == my_player_id) {
                         bool flag = true;
-                        for (auto &p:my_fixed_packs_vector) {
+                        for (auto &p : my_fixed_packs_vector) {
                             if (mahjong::pack_get_type(p) == PACK_TYPE_PUNG &&
                                 mahjong::pack_get_tile(p) == tile_kong) {
                                 flag = false;
@@ -431,7 +433,7 @@ void init() {
                         LOCAL_ASSERT(!flag);
                     } else {
                         bool flag = true;
-                        for (auto &p:all_player_fixed_packs[player_id]) {
+                        for (auto &p : all_player_fixed_packs[player_id]) {
                             if (mahjong::pack_get_type(p) == PACK_TYPE_PUNG &&
                                 mahjong::pack_get_tile(p) == tile_kong) {
                                 flag = false;
@@ -452,21 +454,21 @@ void init() {
     //生成手牌
     my_hand_tiles.tile_count = 0;
     sort(my_standing_tiles_vector.begin(), my_standing_tiles_vector.end());
-    for (const auto &tile:my_standing_tiles_vector)my_hand_tiles.standing_tiles[my_hand_tiles.tile_count++] = tile;
+    for (const auto &tile : my_standing_tiles_vector)my_hand_tiles.standing_tiles[my_hand_tiles.tile_count++] = tile;
     my_hand_tiles.pack_count = 0;
-    for (const auto &pack:my_fixed_packs_vector)my_hand_tiles.fixed_packs[my_hand_tiles.pack_count++] = pack;
+    for (const auto &pack : my_fixed_packs_vector)my_hand_tiles.fixed_packs[my_hand_tiles.pack_count++] = pack;
 
     //开始打表
-    for (auto &cnt:global_tiles_table)cnt = 0;
-    for (auto &cnt:my_hand_tiles_table)cnt = 0;
+    for (auto &cnt : global_tiles_table)cnt = 0;
+    for (auto &cnt : my_hand_tiles_table)cnt = 0;
     //牌河打表
-    for (auto const &tile:tiles_river)++global_tiles_table[tile];
+    for (auto const &tile : tiles_river)++global_tiles_table[tile];
     //花牌打表
-    for (auto const &v:all_player_flowers)for (auto const &tile_flower:v)++global_tiles_table[tile_flower];
+    for (auto const &v : all_player_flowers)for (auto const &tile_flower : v)++global_tiles_table[tile_flower];
     //手牌立牌打表
-    for (auto const &tile:my_standing_tiles_vector)++global_tiles_table[tile], ++my_hand_tiles_table[tile];
+    for (auto const &tile : my_standing_tiles_vector)++global_tiles_table[tile], ++my_hand_tiles_table[tile];
     //自己副露打表
-    for (auto const &p:my_fixed_packs_vector) {
+    for (auto const &p : my_fixed_packs_vector) {
         auto type = mahjong::pack_get_type(p);
         auto tile = mahjong::pack_get_tile(p);
         switch (type) {
@@ -491,8 +493,8 @@ void init() {
         }
     }
     //其他人副露打表
-    for (auto const &v:all_player_fixed_packs) {
-        for (auto const &p:v) {
+    for (auto const &v : all_player_fixed_packs) {
+        for (auto const &p : v) {
             auto offer = mahjong::pack_get_offer(p);
             auto type = mahjong::pack_get_type(p);
             auto tile = mahjong::pack_get_tile(p);
@@ -515,60 +517,60 @@ void init() {
     }
 }
 
-void show_current_board() {
-    std::cout << "River is:" << std::endl;
-    for (const auto &tile:tiles_river) {
-        std::cout << '[' << tile_t2str(tile) << ']';
-    }
-    std::cout << std::endl << std::endl;
-    std::cout << "All players' discard recordings are:" << std::endl;
-    for (int i = 0; i < 4; i++) {
-        std::cout << i << ' ';
-        for (const auto &tile:all_player_discard_record[i]) {
-            std::cout << '[' << tile_t2str(tile) << ']';
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl << std::endl;
-    std::cout << "My hand tiles are:" << std::endl;
-    for (const auto &tile:my_standing_tiles_vector) {
-        std::cout << '[' << tile_t2str(tile) << ']';
-    }
-    std::cout << std::endl << std::endl;
-    std::cout << "My fixed packs are:" << std::endl;
-    for (const auto &pack:my_fixed_packs_vector) {
-        std::cout << pack_t2str(pack);
-    }
-    std::cout << std::endl << std::endl;
-    std::cout << "Other players' fixed packs are:" << std::endl;
-    for (int i = 0; i < 4; i++) {
-        std::cout << i << ' ';
-        for (const auto &pack:all_player_fixed_packs[i]) {
-            std::cout << pack_t2str(pack);
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    std::cout << "All players' flowers are:" << std::endl;
-    for (int i = 0; i < 4; i++) {
-        std::cout << i << ' ';
-        for (const auto &tile:all_player_flowers[i]) {
-            std::cout << '[' << tile_t2str(tile) << ']';
-        }
-        std::cout << std::endl;
-    }
-}
+/*void show_current_board() {
+	std::cout << "River is:" << std::endl;
+	for (const auto &tile : tiles_river) {
+		std::cout << '[' << tile_t2str(tile) << ']';
+	}
+	std::cout << std::endl << std::endl;
+	std::cout << "All players' discard recordings are:" << std::endl;
+	for (int i = 0; i < 4; i++) {
+		std::cout << i << ' ';
+		for (const auto &tile : all_player_discard_record[i]) {
+			std::cout << '[' << tile_t2str(tile) << ']';
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl << std::endl;
+	std::cout << "My hand tiles are:" << std::endl;
+	for (const auto &tile : my_standing_tiles_vector) {
+		std::cout << '[' << tile_t2str(tile) << ']';
+	}
+	std::cout << std::endl << std::endl;
+	std::cout << "My fixed packs are:" << std::endl;
+	for (const auto &pack : my_fixed_packs_vector) {
+		std::cout << pack_t2str(pack);
+	}
+	std::cout << std::endl << std::endl;
+	std::cout << "Other players' fixed packs are:" << std::endl;
+	for (int i = 0; i < 4; i++) {
+		std::cout << i << ' ';
+		for (const auto &pack : all_player_fixed_packs[i]) {
+			std::cout << pack_t2str(pack);
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+	std::cout << "All players' flowers are:" << std::endl;
+	for (int i = 0; i < 4; i++) {
+		std::cout << i << ' ';
+		for (const auto &tile : all_player_flowers[i]) {
+			std::cout << '[' << tile_t2str(tile) << ']';
+		}
+		std::cout << std::endl;
+	}
+}*/
 
 void play_response();
 
-void discard_response();
+void discard_response(int);
 
 void promote_kong_response(mahjong::tile_t);
 
 int main() {
 #ifdef LOCAL_DEBUG
     std::freopen("in.txt", "r", stdin);
-    //std::freopen("out.txt", "w", stdout);
+    std::freopen("out.txt", "w", stdout);
 #endif
     init();
     //如果调试时想要显示对局信息，去掉show_current_board()的注释
@@ -590,7 +592,7 @@ int main() {
             std::string op;
             iss >> player_id >> op;
             if (op == "BUHUA" || op == "DRAW" || op == "GANG") response.emplace_back("PASS");
-            else if (op == "PLAY" || op == "PENG" || op == "CHI")discard_response();
+            else if (op == "PLAY" || op == "PENG" || op == "CHI")discard_response(player_id);
             else if (op == "BUGANG") {
                 std::string card_kong;
                 iss >> card_kong;
@@ -614,23 +616,291 @@ int main() {
 //  别人打出一张牌后决定如何反应（吃，碰，杠，胡，PASS），这张牌在tiles_river的最后一张
 //  别人加杠的时候如何反应（PASS，抢杠胡），这张牌通过参数传递
 //决策的结果按照输出格式push_back到response里面，比如"PASS","CHI card0 card1"等等
-void play_response(bool is_kong, bool is_last) {
+
+//回调函数,记录最好的弃牌方案
+
+void produce_hand_tiles(int offset) {//生成my_hand_tiles
+    my_hand_tiles.tile_count = my_standing_tiles_vector.size() - offset;
+    for (int i = 0; i < my_hand_tiles.tile_count; i++)
+        my_hand_tiles.standing_tiles[i] = my_standing_tiles_vector[i];
+    my_hand_tiles.pack_count = my_fixed_packs_vector.size();
+    for (int i = 0; i < my_hand_tiles.pack_count; i++)
+        my_hand_tiles.fixed_packs[i] = my_fixed_packs_vector[i];
+}
+
+bool f(void *context, const mahjong::enum_result_t *result) {
+    if (result->shanten <= (*(mahjong::enum_result_t *) context).shanten)//如果听牌数减小，则更新
+        *(mahjong::enum_result_t *) context = *result;
+    return 1;//设置为永远继续寻找其他方案
+}
+
+void play_response() {
+    produce_hand_tiles(1);
     std::string res;
-    //...
+    mahjong::enum_result_t my_ans;
+    my_ans.shanten = INF;//初始化听牌数为一个大数：INF
+    mahjong::enum_discard_tile(&my_hand_tiles, *my_standing_tiles_vector.rbegin(), 0xff,
+                               &my_ans, f);//尝试所有弃牌方案，最好方案记录在my_ans中
+    if (my_ans.shanten == -1) {
+        mahjong::calculate_param_t my_param;//二者为算番库所需参数
+        mahjong::fan_table_t my_fan_table;
+        memset(&my_param, 0, sizeof(my_param));
+        memset(my_fan_table, 0, sizeof(my_fan_table));//初始化
+        my_param.hand_tiles = my_hand_tiles;//复制手牌，以下均为设置param的各项成员变量
+        my_param.win_tile = my_standing_tiles_vector[my_standing_tiles_vector.size() - 1];
+        my_param.prevalent_wind = (mahjong::wind_t) wind;
+        my_param.seat_wind = (mahjong::wind_t) my_player_id;
+        my_param.win_flag |= 1;
+        if (global_tiles_table[my_standing_tiles_vector[my_standing_tiles_vector.size() - 1]] == 3)
+            my_param.win_flag |= 2;
+        //请补充是否为杠上开花的判断，是，或上4
+        //请补充是否为牌墙最后一张的判断（海底捞月），是，或上8
+        if (cur_turn_id == 3)//天和
+            my_param.win_flag |= 16;
+        int my_fan_size = mahjong::calculate_fan(&my_param, &my_fan_table);
+        if (my_fan_size >= 8)
+            res = "HU";
+        else res = "PLAY " + tile_t2str(my_standing_tiles_vector.back());
+    } else {
+        res = "PLAY " + tile_t2str(my_ans.discard_tile);
+    }
     response.emplace_back(res);
 }
 
-void discard_response(bool can_chi) {
-    //参数为能否吃牌
+
+void check_chi(int player_id, mahjong::enum_result_t &context, std::string &s) {
+    mahjong::enum_result_t copy_context = context;
+    if (player_id != (my_player_id + 3) % 4)return;//只能吃上家打的牌
+    auto tile_discard = tiles_river.back();//这张就是别人打出的牌
+    if ((tile_discard >> 4) == 4)return;//字牌不可能吃
+    if ((tile_discard & 0xf) <= 7)//尝试吃的是456中的4一张牌
+    {
+        auto tmp1 = tile_discard + 1;
+        auto tmp2 = tile_discard + 2;
+        int pos1 = -1, pos2 = -1;//寻找二者在手牌中的位置
+        int len = my_standing_tiles_vector.size();
+        for (int i = 0; i < len; i++) {
+            if (my_standing_tiles_vector[i] == tmp1)
+                pos1 = i;
+            if (my_standing_tiles_vector[i] == tmp2)
+                pos2 = i;
+        }
+        if ((pos1 != -1) && (pos2 != -1))//找到，即尝试吃牌
+        {//尝试吃牌
+            my_hand_tiles.fixed_packs[my_hand_tiles.pack_count] = mahjong::make_pack(player_id, PACK_TYPE_CHOW,
+                                                                                     tile_discard + 1);
+            my_hand_tiles.pack_count++;
+            int cnt = 0;
+            for (int i = 0; i < my_hand_tiles.tile_count; i++)
+                if (i != pos1 && i != pos2)
+                    my_hand_tiles.standing_tiles[cnt++] = my_standing_tiles_vector[i];
+            mahjong::tile_t tmp = my_hand_tiles.standing_tiles[cnt - 1];
+            my_hand_tiles.tile_count = cnt - 1;
+
+            mahjong::enum_discard_tile(&my_hand_tiles, tmp, 0xff, &context, f);//尝试打每一张牌，计算听牌数
+
+            produce_hand_tiles(0);
+        }
+        if (context.shanten < copy_context.shanten) {
+            s = "CHI " + tile_t2str(tile_discard + 1) + " " + tile_t2str(context.discard_tile);
+            copy_context = context;
+        }
+    }
+    if ((tile_discard & 0xf) != 1 && (tile_discard & 0xf) != 9) {
+        auto tmp1 = tile_discard - 1;
+        auto tmp2 = tile_discard + 1;
+        int pos1 = -1, pos2 = -1;//寻找二者在手牌中的位置
+        int len = my_standing_tiles_vector.size();
+        for (int i = 0; i < len; i++) {
+            if (my_standing_tiles_vector[i] == tmp1)
+                pos1 = i;
+            if (my_standing_tiles_vector[i] == tmp2)
+                pos2 = i;
+        }
+        if ((pos1 != -1) && (pos2 != -1))//找到，即尝试吃牌
+        {//尝试吃牌
+            my_hand_tiles.fixed_packs[my_hand_tiles.pack_count] = mahjong::make_pack(player_id, PACK_TYPE_CHOW,
+                                                                                     tile_discard);
+            my_hand_tiles.pack_count++;
+            int cnt = 0;
+            for (int i = 0; i < my_hand_tiles.tile_count; i++)
+                if (i != pos1 && i != pos2)
+                    my_hand_tiles.standing_tiles[cnt++] = my_standing_tiles_vector[i];
+            mahjong::tile_t tmp = my_hand_tiles.standing_tiles[cnt - 1];
+            my_hand_tiles.tile_count = cnt - 1;
+
+            mahjong::enum_discard_tile(&my_hand_tiles, tmp, 0xff, &context, f);//尝试打每一张牌，计算听牌数
+
+            produce_hand_tiles(0);
+        }
+        if (context.shanten < copy_context.shanten) {
+            s = "CHI " + tile_t2str(tile_discard) + " " + tile_t2str(context.discard_tile);
+            copy_context = context;
+        }
+    }
+    if ((tile_discard & 0xf) >= 3)//尝试吃的一张牌是456中的6
+    {
+        auto tmp1 = tile_discard - 1;
+        auto tmp2 = tile_discard - 2;
+        int pos1 = -1, pos2 = -1;//寻找二者在手牌中的位置
+        int len = my_standing_tiles_vector.size();
+        for (int i = 0; i < len; i++) {
+            if (my_standing_tiles_vector[i] == tmp1)
+                pos1 = i;
+            if (my_standing_tiles_vector[i] == tmp2)
+                pos2 = i;
+        }
+        if ((pos1 != -1) && (pos2 != -1))//找到，即尝试吃牌
+        {//尝试吃牌
+            my_hand_tiles.fixed_packs[my_hand_tiles.pack_count] = mahjong::make_pack(player_id, PACK_TYPE_CHOW,
+                                                                                     tile_discard - 1);
+            my_hand_tiles.pack_count++;
+            int cnt = 0;
+            for (int i = 0; i < my_hand_tiles.tile_count; i++)
+                if (i != pos1 && i != pos2)
+                    my_hand_tiles.standing_tiles[cnt++] = my_standing_tiles_vector[i];
+            mahjong::tile_t tmp = my_hand_tiles.standing_tiles[cnt - 1];
+            my_hand_tiles.tile_count = cnt - 1;
+
+            mahjong::enum_discard_tile(&my_hand_tiles, tmp, 0xff, &context, f);//尝试打每一张牌，计算听牌数
+
+            produce_hand_tiles(0);
+        }
+        if (context.shanten < copy_context.shanten) {
+            s = "CHI " + tile_t2str(tile_discard - 1) + " " + tile_t2str(context.discard_tile);
+            copy_context = context;
+        }
+    }
+}
+
+void check_peng(int player_id, mahjong::enum_result_t &context, std::string &s) {
+    mahjong::enum_result_t copy_context = context;
+    auto tile_discard = tiles_river.back();//这张就是别人打出的牌
+    int pos1 = -1, pos2 = -1;//与吃牌类似
+    int len = my_standing_tiles_vector.size();
+    for (int i = 0; i < len; i++) {
+        if (my_standing_tiles_vector[i] == tile_discard) {
+            if (pos1 == -1)pos1 = i;
+            else if (pos2 == -1)pos2 = i;
+            else break;
+        }
+    }
+    if ((pos1 != -1) && (pos2 != -1)) {//尝试碰牌
+        my_hand_tiles.fixed_packs[my_hand_tiles.pack_count] = mahjong::make_pack(player_id, PACK_TYPE_PUNG,
+                                                                                 tile_discard);
+        my_hand_tiles.pack_count++;
+        int cnt = 0;
+        for (int i = 0; i < my_hand_tiles.tile_count; i++)
+            if (i != pos1 && i != pos2)
+                my_hand_tiles.standing_tiles[cnt++] = my_standing_tiles_vector[i];
+        mahjong::tile_t tmp = my_hand_tiles.standing_tiles[cnt - 1];
+        my_hand_tiles.tile_count = cnt - 1;
+
+        mahjong::enum_discard_tile(&my_hand_tiles, tmp, 0xff, &context, f);//尝试打每一张牌，计算听牌数
+
+        produce_hand_tiles(0);
+    }
+    if (context.shanten < copy_context.shanten) {
+        s = "PENG " + tile_t2str(context.discard_tile);
+    }
+}
+
+void check_gang(int player_id, mahjong::enum_result_t &context, std::string &s) {
+    mahjong::enum_result_t copy_context = context;
+    auto tile_discard = tiles_river.back();//这张就是别人打出的牌
+    int pos1 = -1, pos2 = -1, pos3 = -1;//与碰牌类似
+    int len = my_standing_tiles_vector.size();
+    for (int i = 0; i < len; i++) {
+        if (my_standing_tiles_vector[i] == tile_discard) {
+            if (pos1 == -1)pos1 = i;
+            else if (pos2 == -1)pos2 = i;
+            else if (pos3 == -1)pos3 = i;
+            else break;
+        }
+    }
+    if ((pos1 != -1) && (pos2 != -1) && (pos3 != -1)) {//尝试杠牌
+        my_hand_tiles.fixed_packs[my_hand_tiles.pack_count] = mahjong::make_pack(player_id, PACK_TYPE_KONG,
+                                                                                 tile_discard);
+        my_hand_tiles.pack_count++;
+        int cnt = 0;
+        for (int i = 0; i < my_hand_tiles.tile_count; i++)
+            if (i != pos1 && i != pos2 && i != pos3)
+                my_hand_tiles.standing_tiles[cnt++] = my_standing_tiles_vector[i];
+        my_hand_tiles.tile_count = cnt;
+        mahjong::enum_discard_tile(&my_hand_tiles, 0, 0xff, &context, f);//尝试打每一张牌，计算听牌数
+
+        produce_hand_tiles(0);
+    }
+    if (context.shanten < copy_context.shanten) {
+        s = "GANG";
+    }
+}
+
+void
+check_discard_response(int player_id, mahjong::enum_result_t &context, int mode, std::string &result) {//依次尝试吃牌、碰牌、杠牌
+    if (mode == 0)
+        check_chi(player_id, context, result);
+    if (mode == 1)
+        check_peng(player_id, context, result);
+    if (mode == 2)
+        check_gang(player_id, context, result);
+}
+
+bool check_response_hu(mahjong::tile_t obj) {//判断是否这张obj可以胡牌
+    mahjong::hand_tiles_t my_hand_tiles_copy = my_hand_tiles;
+    mahjong::useful_table_t tmp;
+    if (mahjong::is_waiting(my_hand_tiles_copy, &tmp)) {
+        if (tmp[obj])//不太肯定useful_table_t的用法是不是这样用、、
+            return 1;
+        else
+            return 0;
+    } else return 0;
+}
+
+void discard_response(int player_id) {
     auto tile_discard = tiles_river.back();//这张就是别人打出的牌
     std::string res;
-    //...
+    mahjong::enum_result_t not_response;//不吃、碰、杠的听牌数
+    not_response.shanten = INF;
+    mahjong::enum_result_t if_response;//如果做出反应的听牌数
+    std::string tmp;//储存最优情况的输出
+    mahjong::enum_discard_tile(&my_hand_tiles, 0, 0xff, &not_response, f);//计算not_response
+    if_response.shanten = INF;//初始化为一个大数
+    if (check_response_hu(tile_discard))//如果胡牌了
+    {//判断是否超过8番
+        mahjong::calculate_param_t my_param;
+        mahjong::fan_table_t my_fan_table;
+        memset(&my_param, 0, sizeof(my_param));
+        memset(my_fan_table, 0, sizeof(my_fan_table));
+        my_param.hand_tiles = my_hand_tiles;
+        my_param.win_tile = my_standing_tiles_vector[my_standing_tiles_vector.size() - 1];
+        my_param.prevalent_wind = (mahjong::wind_t) wind;
+        my_param.seat_wind = (mahjong::wind_t) my_player_id;
+        if (global_tiles_table[*my_standing_tiles_vector.rbegin()] == 3)
+            my_param.win_flag |= 2;
+        int my_fan_size = mahjong::calculate_fan(&my_param, &my_fan_table);
+        if (my_fan_size >= 8)
+            res = "HU";
+        else res = "PASS";
+    } else {
+        for (int i = 0; i < 3; i++)//依次尝试吃、碰、杠
+            check_discard_response(player_id, if_response, i, tmp);
+        if (if_response.shanten < not_response.shanten)//比较回应或不回应哪个更优
+            res = tmp;
+        else res = "PASS";
+    }
     response.emplace_back(res);
 }
 
 void promote_kong_response(mahjong::tile_t tile_kong) {
     //tile_kong是别人补杠的牌，其实这个case只用判断能不能胡，不胡是傻逼
     std::string res;
-    //...
+    if (check_response_hu(tile_kong))//胡了！嘿嘿
+    {
+        res = "HU";
+    } else//很遗憾，没胡
+    {
+        res = "PASS";
+    }
     response.emplace_back(res);
 }

@@ -56,27 +56,27 @@ include CMakeFiles/mahjong.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/mahjong.dir/flags.make
 
-CMakeFiles/mahjong.dir/main.cpp.obj: CMakeFiles/mahjong.dir/flags.make
-CMakeFiles/mahjong.dir/main.cpp.obj: ../main.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\projects\ClionProject\pku-course-mahjong\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/mahjong.dir/main.cpp.obj"
-	C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles\mahjong.dir\main.cpp.obj -c C:\projects\ClionProject\pku-course-mahjong\main.cpp
+CMakeFiles/mahjong.dir/ver0.cpp.obj: CMakeFiles/mahjong.dir/flags.make
+CMakeFiles/mahjong.dir/ver0.cpp.obj: ../ver0.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\projects\ClionProject\pku-course-mahjong\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/mahjong.dir/ver0.cpp.obj"
+	C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles\mahjong.dir\ver0.cpp.obj -c C:\projects\ClionProject\pku-course-mahjong\ver0.cpp
 
-CMakeFiles/mahjong.dir/main.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/mahjong.dir/main.cpp.i"
-	C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\projects\ClionProject\pku-course-mahjong\main.cpp > CMakeFiles\mahjong.dir\main.cpp.i
+CMakeFiles/mahjong.dir/ver0.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/mahjong.dir/ver0.cpp.i"
+	C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\projects\ClionProject\pku-course-mahjong\ver0.cpp > CMakeFiles\mahjong.dir\ver0.cpp.i
 
-CMakeFiles/mahjong.dir/main.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/mahjong.dir/main.cpp.s"
-	C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\projects\ClionProject\pku-course-mahjong\main.cpp -o CMakeFiles\mahjong.dir\main.cpp.s
+CMakeFiles/mahjong.dir/ver0.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/mahjong.dir/ver0.cpp.s"
+	C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\G__~1.EXE $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\projects\ClionProject\pku-course-mahjong\ver0.cpp -o CMakeFiles\mahjong.dir\ver0.cpp.s
 
 # Object files for target mahjong
 mahjong_OBJECTS = \
-"CMakeFiles/mahjong.dir/main.cpp.obj"
+"CMakeFiles/mahjong.dir/ver0.cpp.obj"
 
 # External object files for target mahjong
 mahjong_EXTERNAL_OBJECTS =
 
-mahjong.exe: CMakeFiles/mahjong.dir/main.cpp.obj
+mahjong.exe: CMakeFiles/mahjong.dir/ver0.cpp.obj
 mahjong.exe: CMakeFiles/mahjong.dir/build.make
 mahjong.exe: CMakeFiles/mahjong.dir/linklibs.rsp
 mahjong.exe: CMakeFiles/mahjong.dir/objects1.rsp

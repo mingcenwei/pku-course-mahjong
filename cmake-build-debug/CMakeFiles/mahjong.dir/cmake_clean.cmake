@@ -1,5 +1,5 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/mahjong.dir/main.cpp.obj"
+  "CMakeFiles/mahjong.dir/ver0.cpp.obj"
   "mahjong.pdb"
   "mahjong.exe"
   "mahjong.exe.manifest"
