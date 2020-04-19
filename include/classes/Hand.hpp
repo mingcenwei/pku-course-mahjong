@@ -32,6 +32,41 @@ namespace mahjong
 
         [[nodiscard]] StringType toString() const;
 
+        [[nodiscard]] auto begin() noexcept(noexcept(std::begin(tiles_)))
+        {
+            return std::begin(tiles_);
+        }
+        [[nodiscard]] auto begin() const noexcept(noexcept(std::begin(tiles_)))
+        {
+            return std::begin(tiles_);
+        }
+        [[nodiscard]] auto end() noexcept(noexcept(std::end(tiles_)))
+        {
+            return std::end(tiles_);
+        }
+        [[nodiscard]] auto end() const noexcept(noexcept(std::end(tiles_)))
+        {
+            return std::end(tiles_);
+        }
+        [[nodiscard]] decltype(auto) at(std::size_t const index)
+        {
+            return tiles_.at(index);
+        }
+        [[nodiscard]] decltype(auto) at(std::size_t const index) const
+        {
+            return tiles_.at(index);
+        }
+        [[nodiscard]] decltype(auto) operator[](std::size_t const index)
+        {
+            return tiles_[index];
+        }
+        [[nodiscard]] decltype(auto) operator[](std::size_t const index) const
+        {
+            return tiles_[index];
+        }
+        [[nodiscard]] auto size() const
+            noexcept(noexcept(std::size(tiles_))) {return std::size(tiles_);}
+
     private:
         using Container_ = std::vector<TileType>;
 
@@ -39,6 +74,14 @@ namespace mahjong
 
         [[noreturn]] static void throwInvalidStringRepresentationException(
             StringViewType const representation);
+
+    public:
+        using Iterator = decltype(std::begin(std::declval<Container_>()));
+        using ConstIterator =
+            decltype(std::begin(std::declval<Container_ const>()));
+        using Reference = decltype(std::declval<Container_>().at(0));
+        using ConstReference = decltype(std::declval<Container_ const>().at(0));
+        using SizeType = decltype(std::size(std::declval<Container_>()));
     };
 
     Hand::OutStreamType& operator<<(
