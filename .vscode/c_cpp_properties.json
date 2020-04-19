@@ -5,13 +5,15 @@
             "name": "Mac",
             "includePath":
             [
-                "${workspaceFolder}/include/**"
+                "${workspaceFolder}/include/**",
+                "${workspaceFolder}/library/ChineseOfficialMahjongHelper/Classes/mahjong-algorithm/**"
             ],
             "browse":
             {
                 "path":
                 [
-                    "${workspaceFolder}/include/"
+                    "${workspaceFolder}/include/",
+                    "${workspaceFolder}/library/ChineseOfficialMahjongHelper/Classes/mahjong-algorithm/**"
                 ]
             },
             "defines": [],

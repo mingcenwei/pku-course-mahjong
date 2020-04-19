@@ -35,7 +35,8 @@
         // "-lm",
         // "-pthread",
 
-        "-I${workspaceRoot}/include/"
+        "-I${workspaceRoot}/include/",
+        "-I${workspaceRoot}/library/ChineseOfficialMahjongHelper/Classes/mahjong-algorithm/"
     ],
     "clang.cflags":
     [
@@ -73,7 +74,8 @@
         // "-lm",
         // "-pthread",
 
-        "-I${workspaceRoot}/include/"
+        "-I${workspaceRoot}/include/",
+        "-I${workspaceRoot}/library/ChineseOfficialMahjongHelper/Classes/mahjong-algorithm/"
     ],
     "files.associations":
     {
@@ -194,9 +196,15 @@
     "cSpell.words": [
         "Bing",
         "Feng",
+        "Jiagang",
         "Jian",
+        "Juezhang",
+        "Qishou",
         "Tiao",
-        "btwfjh"
+        "Zimo",
+        "btwfjh",
+        "menfeng",
+        "quanfeng"
     ],
     "cmake.configureOnOpen": false
 }

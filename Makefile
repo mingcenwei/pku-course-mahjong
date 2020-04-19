@@ -53,7 +53,10 @@ TEST_SRC         := \
 
 APP_TARGET       := mahjong-ai
 TEST_TARGET      := test
-INCLUDE          := -Iinclude/
+INCLUDE          := \
+	-Iinclude/ \
+	-Ilibrary/ChineseOfficialMahjongHelper/Classes/mahjong-algorithm \
+	
 INSTALL_DIR      := ./bin
 
 
