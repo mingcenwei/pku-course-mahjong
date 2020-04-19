@@ -186,7 +186,10 @@
         "coroutine": "cpp",
         "source_location": "cpp",
         "__memory": "cpp",
-        "__functional_base_03": "cpp"
+        "__functional_base_03": "cpp",
+        "forward_list": "cpp",
+        "*.rmd": "markdown",
+        "regex": "cpp"
     },
     "cSpell.words": [
         "Bing",

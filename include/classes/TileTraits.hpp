@@ -11,6 +11,32 @@
 
 namespace mahjong
 {
+    enum class Wind
+    {
+        east,
+        south,
+        west,
+        north,
+    };
+    inline constexpr std::array k_windList {
+        Wind::east,
+        Wind::south,
+        Wind::west,
+        Wind::north,
+    };
+    constexpr std::size_t windToIndex(Wind const wind) noexcept
+    {
+        return static_cast<std::size_t>(wind);
+    }
+    constexpr Wind unsafeIndexToWind(std::size_t const index) noexcept
+    {
+        return static_cast<Wind>(index);
+    }
+    constexpr Wind indexToWind(std::size_t const index);
+    constexpr Wind nextWind(
+        Wind const wind, std::ptrdiff_t const step = 1) noexcept;
+    constexpr std::ptrdiff_t windDistance(Wind const wind1, Wind const wind2) noexcept;
+
     enum class TileKind
     {
         bing,

@@ -37,6 +37,38 @@ namespace mahjong::private_detail_
 
 namespace mahjong
 {
+    constexpr Wind indexToWind(std::size_t const index)
+    {
+        if (index < std::size(k_windList))
+        {
+            return unsafeIndexToWind(index);
+        }
+        else
+        {
+            using namespace std::string_literals;
+            throw std::out_of_range {"invalid wind index: "s +
+                                     std::to_string(index)};
+        }
+    }
+
+    constexpr Wind nextWind(Wind const wind, std::ptrdiff_t const step) noexcept
+    {
+        auto windIndex {static_cast<std::ptrdiff_t>(windToIndex(wind))};
+        windIndex += step;
+        windIndex %= static_cast<std::ptrdiff_t>(std::size(k_windList));
+        return unsafeIndexToWind(static_cast<std::size_t>(windIndex));
+    }
+
+    constexpr std::ptrdiff_t windDistance(
+        Wind const wind1, Wind const wind2) noexcept
+    {
+        auto const index1 {static_cast<std::ptrdiff_t>(wind1)};
+        auto const index2 {static_cast<std::ptrdiff_t>(wind2)};
+        constexpr auto numOfWinds {
+            static_cast<std::ptrdiff_t>(std::size(k_windList))};
+        return (index1 - index2 + numOfWinds) / numOfWinds;
+    }
+
     constexpr TileKind indexToTileKind(std::size_t const index)
     {
         if (index < std::size(k_tileKindList))
