@@ -33,6 +33,8 @@ CXXFLAGS_DEBUG   := \
 	\
 	-fno-omit-frame-pointer \
 	-fno-optimize-sibling-calls \
+	\
+	-fsanitize-blacklist=.address_sanitizer_blacklist.txt \
 
 LDFLAGS          := \
 	# -lm \

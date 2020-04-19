@@ -32,6 +32,7 @@
         "-fsanitize=nullability",
         "-fno-omit-frame-pointer",
         "-fno-optimize-sibling-calls",
+        "-fsanitize-blacklist=${workspaceRoot}/.address_sanitizer_blacklist.txt",
 
         // "-lm",
         // "-pthread",
@@ -72,6 +73,7 @@
         "-fsanitize=nullability",
         "-fno-omit-frame-pointer",
         "-fno-optimize-sibling-calls",
+        "-fsanitize-blacklist=${workspaceRoot}/.address_sanitizer_blacklist.txt",
 
         // "-lm",
         // "-pthread",

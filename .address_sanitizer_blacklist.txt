@@ -1,0 +1,2 @@
+# ignore third party source files
+src:library/ChineseOfficialMahjongHelper/Classes/mahjong-algorithm/*

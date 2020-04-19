@@ -41,6 +41,7 @@
                 "-fsanitize=nullability",
                 "-fno-omit-frame-pointer",
                 "-fno-optimize-sibling-calls",
+                "-fsanitize-blacklist=.address_sanitizer_blacklist.txt",
 
                 // "-lm",
                 // "-pthread",
