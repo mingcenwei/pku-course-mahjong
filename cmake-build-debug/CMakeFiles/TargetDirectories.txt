@@ -1,0 +1,3 @@
+C:/projects/ClionProject/pku-course-mahjong/cmake-build-debug/CMakeFiles/mahjong.dir
+C:/projects/ClionProject/pku-course-mahjong/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/projects/ClionProject/pku-course-mahjong/cmake-build-debug/CMakeFiles/rebuild_cache.dir
