@@ -4,6 +4,7 @@
 #include "classes/Hand.hpp"
 #include "classes/Tile.hpp"
 #include "utilities/debugging.hpp"
+#include "utilities/io.hpp"
 
 #include <cstddef>
 #include <string_view>
@@ -33,14 +34,8 @@ namespace mahjong
             : menfeng_ {menfeng}, hand_ {std::move(hand)}
         {}
 
-        void setHand(Hand_ const& hand)
-        {
-            hand_ = hand;
-        }
-        void setHand(Hand_&& hand)
-        {
-            hand_ = std::move(hand);
-        }
+        void setHand(Hand_ const& hand) { hand_ = hand; }
+        void setHand(Hand_&& hand) { hand_ = std::move(hand); }
 
         Fan calculateFan(
             Tile winningTile,
@@ -62,6 +57,11 @@ namespace mahjong
 
         static void printFanTable(
             FanTable const& fantable, bool onlyPrintExisting = true);
+
+        io::String serialize(io::StringView delimiter) const;
+
+        static Player deserialize(
+            io::InStream& data, io::InStream::char_type delimiter);
 
     private:
         friend class Rival;
@@ -90,7 +90,12 @@ namespace mahjong
     {
     public:
         Rival() = delete;
-        // Rival(Wind const menfeng) : menfeng_ {menfeng} {}
+        Rival(Wind const menfeng) : menfeng_ {menfeng} {}
+
+        io::String serialize(io::StringView delimiter) const;
+
+        static Rival deserialize(
+            io::InStream& data, io::InStream::char_type delimiter);
 
     private:
         friend class Player;
@@ -104,15 +109,15 @@ namespace mahjong
         using Peng_ = Player::Peng_;
         using Gang_ = Player::Gang_;
 
-        // Wind menfeng_ {};
-        // Hua_ hua_ {};
-        // Chi_ firstTileOfChi_ {};
-        // FlagContainer_<std::size_t> chiIndices_ {};
-        // Peng_ peng_ {};
-        // FlagContainer_<Wind> pengFrom_ {};
-        // Gang_ gang_ {};
-        // FlagContainer_<Wind> gangFrom_ {};
-        // FlagContainer_<bool> isJiagang_ {};
+        Wind menfeng_ {};
+        Hua_ hua_ {};
+        Chi_ firstTileOfChi_ {};
+        FlagContainer_<std::size_t> chiIndices_ {};
+        Peng_ peng_ {};
+        FlagContainer_<Wind> pengFrom_ {};
+        Gang_ gang_ {};
+        FlagContainer_<Wind> gangFrom_ {};
+        FlagContainer_<bool> isJiagang_ {};
     };
 } // namespace mahjong
 

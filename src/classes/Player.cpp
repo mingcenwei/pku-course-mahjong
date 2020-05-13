@@ -1,6 +1,8 @@
 #include "classes/Player.hpp"
+#include "utilities/debugging.hpp"
 
 #include <array>
+#include <charconv>
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -295,6 +297,103 @@ namespace
 
         return params;
     }
+
+    template <typename Integer>
+    Integer stringViewToInteger(mahjong::io::StringView strView)
+    {
+        Integer num;
+        auto const conversionResult {
+            std::from_chars(std::begin(strView), std::end(strView), num)};
+        if constexpr (utilities::k_isDebugging)
+        {
+            if (conversionResult.ec == std::errc::invalid_argument)
+            {
+                throw std::invalid_argument {
+                    "the string_view cannot be converted to an integer"};
+            }
+            else if (conversionResult.ec == std::errc::result_out_of_range)
+            {
+                throw std::range_error {"integer conversion out of range"};
+            }
+        }
+        return num;
+    }
+
+    mahjong::io::String serializeWind(mahjong::Wind const wind)
+    {
+        return std::to_string(mahjong::windToIndex(wind));
+    }
+    mahjong::Wind unsafeDeserializeWind(mahjong::io::InStream& inStream)
+    {
+        std::size_t index;
+        inStream >> index;
+        return mahjong::indexToWind(index);
+    }
+    mahjong::Wind unsafeStrToWind(mahjong::io::StringView const& str)
+    {
+        return mahjong::indexToWind(stringViewToInteger<std::size_t>(str));
+    }
+
+    template <typename Container, typename Serializer>
+    mahjong::io::String serializeContainer(
+        Container const& container,
+        Serializer const& serializer,
+        std::size_t const eachLength = 1,
+        mahjong::io::StringView const delimiter = "")
+    {
+        mahjong::io::String result {};
+        auto const size {std::size(container)};
+        auto const delimiterLength {std::size(delimiter)};
+        auto const capacity {size * (eachLength + delimiterLength)};
+        result.reserve(capacity);
+        if constexpr (std::is_same_v<Container, std::vector<bool>>)
+        {
+            for (auto object: container)
+            {
+                result += serializer(object);
+                result += delimiter;
+            }
+        }
+        else
+        {
+            for (auto&& object: container)
+            {
+                result += serializer(object);
+                result += delimiter;
+            }
+        }
+
+        return result;
+    }
+
+    template <typename Container, typename Deserializer>
+    Container deserializeContainer(
+        mahjong::io::String const& data,
+        Deserializer const& deserializer,
+        std::size_t const eachLength = 1,
+        mahjong::io::StringView const delimiter = "")
+    {
+        Container result {};
+        auto const delimiterLength {std::size(delimiter)};
+        auto const itemStringLength {eachLength + delimiterLength};
+        if constexpr (utilities::k_isDebugging)
+        {
+            if (std::size(data) % itemStringLength != 0)
+            {
+                throw std::invalid_argument {"invalid data string"};
+            }
+        }
+        auto numOfItems {std::size(data) / itemStringLength};
+        result.reserve(numOfItems);
+        for (std::size_t index {0}; index < numOfItems; ++index)
+        {
+            auto const offset {index * itemStringLength};
+            mahjong::io::StringView const itemStringView {
+                std::data(data) + offset, eachLength};
+            result.emplace_back(deserializer(itemStringView));
+        }
+        return result;
+    }
 } // namespace
 
 namespace mahjong
@@ -430,5 +529,137 @@ namespace mahjong
                 std::cout << fanName << ", " << fan << ": " << count << "\n";
             }
         }
+    }
+
+    io::String Player::serialize(io::StringView const delimiter) const
+    {
+        constexpr std::size_t initialCapacity {300};
+        io::String result {};
+        result.reserve(initialCapacity);
+
+        result += serializeWind(menfeng_);
+        result += delimiter;
+        result += hand_.toString();
+        result += delimiter;
+        result += hua_.toString();
+        result += delimiter;
+        result += firstTileOfChi_.toString();
+        result += delimiter;
+        constexpr auto sizeTypeToString {
+            [](std::size_t const size) { return std::to_string(size); }};
+        result += serializeContainer(chiIndices_, sizeTypeToString);
+        result += delimiter;
+        result += peng_.toString();
+        result += delimiter;
+        result += serializeContainer(pengFrom_, serializeWind);
+        result += delimiter;
+        result += gang_.toString();
+        result += delimiter;
+        result += serializeContainer(gangFrom_, serializeWind);
+        result += delimiter;
+        result += serializeContainer(isJiagang_, sizeTypeToString);
+        result += delimiter;
+
+        result.shrink_to_fit();
+        return result;
+    }
+
+    Player Player::deserialize(
+        io::InStream& data, io::InStream::char_type const delimiter)
+    {
+        constexpr std::size_t initialBufferCapacity {100};
+        io::String buffer {};
+        buffer.reserve(initialBufferCapacity);
+
+        auto const menfeng {unsafeDeserializeWind(data)};
+        io::ignoreUntil(data, delimiter);
+        std::getline(data, buffer, delimiter);
+        Player::Hand_ hand {buffer};
+        Player player {menfeng, std::move(hand)};
+        std::getline(data, buffer, delimiter);
+        player.hua_ = Hua_ {buffer};
+        std::getline(data, buffer, delimiter);
+        player.firstTileOfChi_ = Chi_ {buffer};
+        std::getline(data, buffer, delimiter);
+        player.chiIndices_ = deserializeContainer<decltype(player.chiIndices_)>(
+            buffer, stringViewToInteger<std::size_t>);
+        std::getline(data, buffer, delimiter);
+        player.peng_ = Peng_ {buffer};
+        std::getline(data, buffer, delimiter);
+        player.pengFrom_ = deserializeContainer<decltype(player.pengFrom_)>(
+            buffer, unsafeStrToWind);
+        std::getline(data, buffer, delimiter);
+        player.gang_ = Gang_ {buffer};
+        std::getline(data, buffer, delimiter);
+        player.gangFrom_ = deserializeContainer<decltype(player.gangFrom_)>(
+            buffer, unsafeStrToWind);
+        std::getline(data, buffer, delimiter);
+        player.isJiagang_ = deserializeContainer<decltype(player.isJiagang_)>(
+            buffer, [](auto const& str) { return str == "0" ? true : false; });
+        return player;
+    }
+
+    io::String Rival::serialize(io::StringView const delimiter) const
+    {
+        constexpr std::size_t initialCapacity {200};
+        io::String result {};
+        result.reserve(initialCapacity);
+
+        result += serializeWind(menfeng_);
+        result += delimiter;
+        result += hua_.toString();
+        result += delimiter;
+        result += firstTileOfChi_.toString();
+        result += delimiter;
+        constexpr auto sizeTypeToString {
+            [](std::size_t const size) { return std::to_string(size); }};
+        result += serializeContainer(chiIndices_, sizeTypeToString);
+        result += delimiter;
+        result += peng_.toString();
+        result += delimiter;
+        result += serializeContainer(pengFrom_, serializeWind);
+        result += delimiter;
+        result += gang_.toString();
+        result += delimiter;
+        result += serializeContainer(gangFrom_, serializeWind);
+        result += delimiter;
+        result += serializeContainer(isJiagang_, sizeTypeToString);
+        result += delimiter;
+
+        result.shrink_to_fit();
+        return result;
+    }
+
+    Rival Rival::deserialize(
+        io::InStream& data, io::InStream::char_type const delimiter)
+    {
+        constexpr std::size_t initialBufferCapacity {100};
+        io::String buffer {};
+        buffer.reserve(initialBufferCapacity);
+
+        auto const menfeng {unsafeDeserializeWind(data)};
+        io::ignoreUntil(data, delimiter);
+        Rival rival {menfeng};
+        std::getline(data, buffer, delimiter);
+        rival.hua_ = Hua_ {buffer};
+        std::getline(data, buffer, delimiter);
+        rival.firstTileOfChi_ = Chi_ {buffer};
+        std::getline(data, buffer, delimiter);
+        rival.chiIndices_ = deserializeContainer<decltype(rival.chiIndices_)>(
+            buffer, stringViewToInteger<std::size_t>);
+        std::getline(data, buffer, delimiter);
+        rival.peng_ = Peng_ {buffer};
+        std::getline(data, buffer, delimiter);
+        rival.pengFrom_ = deserializeContainer<decltype(rival.pengFrom_)>(
+            buffer, unsafeStrToWind);
+        std::getline(data, buffer, delimiter);
+        rival.gang_ = Gang_ {buffer};
+        std::getline(data, buffer, delimiter);
+        rival.gangFrom_ = deserializeContainer<decltype(rival.gangFrom_)>(
+            buffer, unsafeStrToWind);
+        std::getline(data, buffer, delimiter);
+        rival.isJiagang_ = deserializeContainer<decltype(rival.isJiagang_)>(
+            buffer, [](auto const& str) { return str == "0" ? true : false; });
+        return rival;
     }
 } // namespace mahjong

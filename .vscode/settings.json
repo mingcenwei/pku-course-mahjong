@@ -195,7 +195,8 @@
         "__functional_base_03": "cpp",
         "forward_list": "cpp",
         "*.rmd": "markdown",
-        "regex": "cpp"
+        "regex": "cpp",
+        "charconv": "cpp"
     },
     "cSpell.words": [
         "Bing",
@@ -209,7 +210,8 @@
         "Zimo",
         "btwfjh",
         "menfeng",
-        "quanfeng"
+        "quanfeng",
+        "stoul"
     ],
     "cmake.configureOnOpen": false
 }
